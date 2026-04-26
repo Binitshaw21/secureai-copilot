@@ -17,7 +17,7 @@ function App() {
     setReport(null)
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/scan/start/', {
+      const response = await axios.post('https://secureai-copilot-exnr.vercel.app/api/scan/start/',  {
         domain_url: url
       })
       setReport(response.data)

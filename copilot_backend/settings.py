@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-^3r9*9c#cafi#n*&-gh=vqg$3h%5$2lj0i1l#q2g^_e)fn2=j@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['secureai-copilot-exnr.vercel.app', 'localhost', '127.0.0.1']
 
 
 # Application definition

@@ -1,121 +1,81 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import axios from 'axios'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [url, setUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [report, setReport] = useState(null)
+  const [error, setError] = useState('')
+
+  const handleScan = async (e) => {
+    e.preventDefault()
+    if (!url) return;
+
+    setLoading(true)
+    setError('')
+    setReport(null)
+
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/scan/start/', {
+        domain_url: url
+      })
+      setReport(response.data)
+    } catch (err) {
+      setError('Failed to scan. Please check the URL and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="dashboard-container">
+      <header className="header">
+        <h1>🛡️ SecureAI Copilot</h1>
+        <p>Enterprise-grade cybersecurity, simplified for small businesses.</p>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="main-content">
+        <form className="scan-form" onSubmit={handleScan}>
+          <input 
+            type="url" 
+            placeholder="Enter your website URL (e.g., http://neverssl.com)" 
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            required
+            className="url-input"
+          />
+          <button type="submit" className="scan-btn" disabled={loading}>
+            {loading ? 'Scanning...' : 'Scan Now'}
+          </button>
+        </form>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {error && <div className="error-box">{error}</div>}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {report && (
+          <div className="report-card">
+            <h2>Scan Complete</h2>
+            <p className="status-text">Target: {url}</p>
+            
+            <div className="vulnerabilities-list">
+              {report.vulnerabilities.map((vuln) => (
+                <div key={vuln.id} className={`threat-item ${vuln.severity.toLowerCase()}`}>
+                  <div className="threat-header">
+                    <h3>{vuln.technical_name}</h3>
+                    <span className="severity-badge">{vuln.severity}</span>
+                  </div>
+                  <p className="plain-language">{vuln.plain_language_alert}</p>
+                </div>
+              ))}
+              
+              {report.vulnerabilities.length === 0 && (
+                <p className="safe-text">✅ No obvious vulnerabilities found on this initial scan.</p>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   )
 }
 

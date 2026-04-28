@@ -127,3 +127,16 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Tell Django to use our new Custom User model
 AUTH_USER_MODEL = 'scanner.CustomUser'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # Forces user to re-login after 1 hour of inactivity
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # Keeps them logged in for a week if they stay active
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}

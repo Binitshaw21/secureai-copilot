@@ -1,10 +1,16 @@
 from django.contrib import admin
-from django.urls import path
-from scanner import views
+from django.urls import path, include
+from scanner.views import RegisterView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # The endpoint React will call to start a scan:
-    path('api/scan/start/', views.start_scan, name='start_scan'),
+    # --- Authentication Doors ---
+    path('api/signup/', RegisterView.as_view(), name='signup'),
+    path('api/login/', TokenObtainPairView.as_view(), name='login'), # SimpleJWT handles this automatically!
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # --- Your Scanner Apps ---
+    path('api/', include('scanner.urls')), 
 ]

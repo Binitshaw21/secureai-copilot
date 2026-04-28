@@ -1,3 +1,35 @@
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+class CustomUser(AbstractUser):
+    # --- 1. Role-Based Access Control ---
+    ROLE_CHOICES = (
+        ('User', 'User'),
+        ('Employee', 'Employee'),
+        ('Admin', 'Admin'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='User')
+
+    # --- 2. Security & 2FA ---
+    is_email_verified = models.BooleanField(default=False)
+    is_2fa_enabled = models.BooleanField(default=False)
+    otp_code = models.CharField(max_length=6, blank=True, null=True)
+    otp_created_at = models.DateTimeField(blank=True, null=True)
+
+    # --- 3. Subscriptions & Billing ---
+    PLAN_CHOICES = (
+        ('Free', 'Free'),
+        ('Starter', 'Starter'),
+        ('Pro', 'Pro'),
+    )
+    subscription_plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='Free')
+
+    def __str__(self):
+        return f"{self.username} - {self.role} ({self.subscription_plan})"
+
+
+
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
@@ -7,7 +39,7 @@ class TargetAsset(models.Model):
     Represents the SME's website or web application being monitored.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assets')
+    owner = owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     domain_url = models.URLField(max_length=255)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

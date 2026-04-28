@@ -124,3 +124,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Tell Django to use our new Custom User model
+AUTH_USER_MODEL = 'scanner.CustomUser'

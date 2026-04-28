@@ -1,20 +1,17 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
-from .models import CustomUser
-from .serializers import RegisterSerializer
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
+# We only import CustomUser now, NOT the default User!
+from .models import CustomUser, TargetAsset, ScanLog, Vulnerability
+from .serializers import RegisterSerializer, ScanLogSerializer
+from .engine import run_security_scan
 
 class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
-    permission_classes = (AllowAny,) # Anyone can access the signup page
+    permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
-    
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from django.contrib.auth.models import User
-from .models import TargetAsset, ScanLog, Vulnerability
-from .serializers import ScanLogSerializer
-from .engine import run_security_scan  # <-- We imported your new engine!
 
 @api_view(['POST'])
 def start_scan(request):
@@ -23,7 +20,8 @@ def start_scan(request):
     if not url:
         return Response({"error": "Please provide a website URL to scan."}, status=status.HTTP_400_BAD_REQUEST)
 
-    test_user, created = User.objects.get_or_create(username="sme_test_user")
+    # We use CustomUser here so the database doesn't crash!
+    test_user, created = CustomUser.objects.get_or_create(username="sme_test_user")
     asset, created = TargetAsset.objects.get_or_create(owner=test_user, domain_url=url)
     
     # Create the log
@@ -39,7 +37,7 @@ def start_scan(request):
             technical_name=threat['technical_name'],
             plain_language_alert=threat['plain_language_alert'],
             severity=threat['severity'],
-            ml_confidence_score=0.95  # Default for MVP
+            ml_confidence_score=0.95 
         )
         
     # Mark scan as complete

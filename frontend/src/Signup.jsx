@@ -19,8 +19,13 @@ export default function Signup() {
             // If successful, instantly send them to the login page!
             navigate('/login');
         } catch (err) {
-            setError('Error creating account. Try a different username.');
-        }
+    // This will print the EXACT error from Django or the Network onto your screen!
+    setError(
+        err.response?.data 
+        ? JSON.stringify(err.response.data) 
+        : err.message
+    );
+}
     };
 
     return (

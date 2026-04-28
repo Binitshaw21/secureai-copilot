@@ -124,11 +124,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://secureai-copilot-exnr.vercel.app" 
-], # <-- Paste your exact frontend link here! (NO slash at the end)
+    "https://secureai-copilot-8pvc.vercel.app" 
+]
+ # <-- Paste your exact frontend link here! (NO slash at the end)
 
 
 # Tell Django to use our new Custom User model

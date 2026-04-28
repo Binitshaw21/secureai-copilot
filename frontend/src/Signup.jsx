@@ -18,13 +18,16 @@ export default function Signup() {
            await axios.post('https://YOUR-BACKEND-URL.vercel.app/api/signup/', formData);
             // If successful, instantly send them to the login page!
             navigate('/login');
-        } catch (err) {
-    // This will print the EXACT error from Django or the Network onto your screen!
-    setError(
-        err.response?.data 
+    } catch (err) {
+    // This removes the blindfold! 
+    // It will show the EXACT reason (Database error, URL error, etc.)
+    const detailedError = err.response?.data 
         ? JSON.stringify(err.response.data) 
-        : err.message
-    );
+        : err.message;
+        
+    setError(`SYSTEM ERROR: ${detailedError}`);
+    console.error("Full Error Object:", err);
+
 }
     };
 

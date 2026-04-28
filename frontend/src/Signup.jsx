@@ -15,7 +15,7 @@ export default function Signup() {
         e.preventDefault();
         try {
             // Send the data to your local Django API
-            await axios.post('http://127.0.0.1:8000/api/signup/', formData);
+           await axios.post('https://YOUR-BACKEND-URL.vercel.app/api/signup/', formData);
             // If successful, instantly send them to the login page!
             navigate('/login');
         } catch (err) {

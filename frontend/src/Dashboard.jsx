@@ -28,7 +28,7 @@ export default function Dashboard() {
             const token = localStorage.getItem('access_token');
             
             // Send the scan request with the token attached!
-            const response = await axios.post('http://127.0.0.1:8000/api/scan/', 
+           const response = await axios.post('https://YOUR-BACKEND-URL.vercel.app/api/scan/', 
                 { url: targetUrl },
                 { headers: { Authorization: `Bearer ${token}` } } 
             );

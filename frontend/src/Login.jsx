@@ -14,7 +14,7 @@ export default function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/login/', formData);
+            const response = await axios.post('https://YOUR-BACKEND-URL.vercel.app/api/login/', formData);
             
             // SECURITY: Save the JWT Tokens directly into the browser's local vault!
             localStorage.setItem('access_token', response.data.access);

@@ -1,8 +1,17 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser, ScanLog, TargetAsset
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    class ScanLogSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = ScanLog
+            fields = '__all__'
+
+class TargetAssetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TargetAsset
+        fields = '__all__'
 
     class Meta:
         model = CustomUser
@@ -16,3 +25,4 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+    

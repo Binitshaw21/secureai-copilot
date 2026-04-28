@@ -15,7 +15,9 @@ export default function Signup() {
         e.preventDefault();
         try {
             // Send the data to your local Django API
-           await axios.post('https://YOUR-BACKEND-URL.vercel.app/api/signup/', formData);
+          // Look at your Vercel Dashboard to get your exact backend link!
+// Look at your Vercel Dashboard to get your exact backend link!
+await axios.post('https://secureai-copilot-exnr.vercel.app/api/signup/', formData);
             // If successful, instantly send them to the login page!
             navigate('/login');
     } catch (err) {

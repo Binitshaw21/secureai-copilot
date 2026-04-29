@@ -47,3 +47,15 @@ def start_scan(request):
     # Send the final report back to the frontend
     serializer = ScanLogSerializer(scan_log)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+def get_scan_history(request):
+    # Find the same user we used for the scanner
+    test_user, created = CustomUser.objects.get_or_create(username="sme_test_user")
+    
+    # Grab all their past scans, ordered by newest first (-id)
+    logs = ScanLog.objects.filter(asset__owner=test_user).order_by('-id')
+    
+    # Translate it to JSON and send it to React
+    serializer = ScanLogSerializer(logs, many=True)
+    return Response(serializer.data)

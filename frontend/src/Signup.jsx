@@ -1,6 +1,9 @@
+// 1. ALL IMPORTS GO AT THE VERY TOP!
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Signup() {
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
@@ -14,36 +17,36 @@ export default function Signup() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // Send the data to your local Django API
-          // Look at your Vercel Dashboard to get your exact backend link!
-// Look at your Vercel Dashboard to get your exact backend link!
-await axios.post('https://secureai-copilot-exnr.vercel.app/api/signup/', formData);
-            // If successful, instantly send them to the login page!
-            navigate('/login');
-    } catch (err) {
-    // This removes the blindfold! 
-    // It will show the EXACT reason (Database error, URL error, etc.)
-    const detailedError = err.response?.data 
-        ? JSON.stringify(err.response.data) 
-        : err.message;
-        
-    setError(`SYSTEM ERROR: ${detailedError}`);
-    console.error("Full Error Object:", err);
+            // Send data to your live Vercel backend
+            await axios.post('https://secureai-copilot-exnr.vercel.app/api/signup/', formData);
+            
+            // 2. Trigger the premium success message!
+            toast.success('Account created successfully! Redirecting...', {
+                theme: "dark",
+                position: "top-right"
+            });
 
-}
+            // Wait 2 seconds so they can read the message, then teleport them
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
+
+        } catch (err) {
+            toast.error('That username is already taken!', { theme: "dark" });
+            setError('That username is already taken.');
+        }
     };
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#121212', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ backgroundColor: '#1e1e1e', padding: '40px', borderRadius: '10px', width: '400px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
                 <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Create Account</h2>
-                {error && <p style={{ color: '#ff4c4c', textAlign: 'center' }}>{error}</p>}
                 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <input type="text" name="username" placeholder="Username" onChange={handleChange} required 
                            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #333', backgroundColor: '#2d2d2d', color: 'white' }} />
                     
-                    <input type="email" name="email" placeholder="Email Address" onChange={handleChange} required 
+                    <input type="email" name="email" placeholder="Email" onChange={handleChange} required 
                            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #333', backgroundColor: '#2d2d2d', color: 'white' }} />
                     
                     <input type="password" name="password" placeholder="Password" onChange={handleChange} required 
@@ -54,9 +57,12 @@ await axios.post('https://secureai-copilot-exnr.vercel.app/api/signup/', formDat
                     </button>
                 </form>
                 <p style={{ textAlign: 'center', marginTop: '20px', color: '#aaa' }}>
-                    Already have an account? <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={() => navigate('/login')}>Log In</span>
+                    Already have an account? <span style={{ color: '#28a745', cursor: 'pointer' }} onClick={() => navigate('/login')}>Log In</span>
                 </p>
             </div>
+            
+            {/* 3. The Toast Container must be at the bottom of the return statement */}
+            <ToastContainer />
         </div>
     );
 }

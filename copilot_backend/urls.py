@@ -14,3 +14,7 @@ urlpatterns = [
     # --- Your Scanner Apps ---
     path('api/', include('scanner.urls')), 
 ]
+from scanner.views import get_scan_history
+
+# ... inside your urlpatterns list, add this line:
+path('api/history/', get_scan_history),

@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+// We will build these beautiful pages next!
+import LandingPage from './LandingPage'; 
 import Login from './Login';
 import Signup from './Signup';
 import Dashboard from './Dashboard';
 
-// 🛑 THE BOUNCER: This function checks for the JWT ID card
-const PrivateRoute = ({ children }) => {
+// THE BOUNCER: Checks if the user has a VIP pass (JWT token) in their browser
+const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('access_token');
-    
-    // If they have a token, open the door (render the children). 
-    // If they don't, kick them back to the login page!
     return token ? children : <Navigate to="/login" />;
 };
 
@@ -16,17 +16,18 @@ export default function App() {
     return (
         <Router>
             <Routes>
-                {/* Public Doors */}
+                {/* 🌍 PUBLIC ROUTES (Anyone can see these) */}
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
 
-                {/* The VIP Room (Protected by the Bouncer) */}
+                {/* 🔒 PREMIUM LOCKED ROUTES (Must be logged in) */}
                 <Route 
-                    path="/" 
+                    path="/dashboard" 
                     element={
-                        <PrivateRoute>
+                        <ProtectedRoute>
                             <Dashboard />
-                        </PrivateRoute>
+                        </ProtectedRoute>
                     } 
                 />
             </Routes>

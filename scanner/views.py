@@ -10,10 +10,12 @@ from .models import CustomUser, TargetAsset, ScanLog, Vulnerability
 from .serializers import RegisterSerializer, ScanLogSerializer
 from .engine import run_security_scan
 
+
 class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -51,7 +53,9 @@ def start_scan(request):
     serializer = ScanLogSerializer(scan_log)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_scan_history(request):
     # Find the same user we used for the scanner
     test_user, created = CustomUser.objects.get_or_create(username="sme_test_user")
@@ -62,10 +66,13 @@ def get_scan_history(request):
     # Translate it to JSON and send it to React
     serializer = ScanLogSerializer(logs, many=True)
     return Response(serializer.data)
+
+
 # Initialize Razorpay Client
 razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_subscription(request):
     try:
         # We charge ₹999 for the Premium Tier (Razorpay calculates in paise, so multiply by 100)

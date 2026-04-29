@@ -2,6 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # This catches the exact "/api/scan/" request from your React frontend!
-    path('scan/', views.scan_url, name='scan'),
+    # We changed 'views.scan_url' to 'views.start_scan' to match your views.py!
+    path('scan/', views.start_scan, name='scan'),
 ]

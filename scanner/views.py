@@ -3,7 +3,7 @@ from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 
 # We only import CustomUser now, NOT the default User!
 from .models import CustomUser, TargetAsset, ScanLog, Vulnerability
@@ -16,6 +16,7 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def start_scan(request):
     url = request.data.get('domain_url')
     

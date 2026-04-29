@@ -2,18 +2,16 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-
-# --- THE NEW IMPORT ---
 from google import genai
 
 # Load the secret key from your .env file
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
-# --- THE NEW CLIENT INITIALIZATION ---
-# It automatically looks for the GEMINI_API_KEY environment variable!
-client = genai.Client()
-
 def run_security_scan(target_url):
+    # --- MOVED INSIDE THE FUNCTION ---
+    # This prevents the server from crashing on boot if the key loads a millisecond late!
+    client = genai.Client()
+    
     domain = target_url.replace("https://", "").replace("http://", "").split('/')[0]
     raw_findings = []
     
@@ -47,13 +45,11 @@ def run_security_scan(target_url):
     """
     
     try:
-        # --- THE NEW WAY TO GENERATE CONTENT ---
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
         )
         
-        # Clean the response and convert it to a Python dictionary
         text_response = response.text.strip()
         if text_response.startswith("```json"):
             text_response = text_response[7:-3]
@@ -62,7 +58,6 @@ def run_security_scan(target_url):
         
     except Exception as e:
         print(f"AI Error: {e}")
-        # Safe fallback if the AI takes too long
         return [{
             "technical_name": "Raw Vulnerabilities Detected", 
             "plain_language_alert": f"We found: {', '.join(raw_findings)}. AI generation temporarily unavailable.", 

@@ -1,5 +1,5 @@
 // 1. ALL IMPORTS GO AT THE VERY TOP!
-import { useState } from 'react';
+/*import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -61,8 +61,8 @@ export default function Signup() {
                 </p>
             </div>
             
-            {/* 3. The Toast Container must be at the bottom of the return statement */}
+            {/* 3. The Toast Container must be at the bottom of the return statement }
             <ToastContainer />
         </div>
     );
-}
+}*/

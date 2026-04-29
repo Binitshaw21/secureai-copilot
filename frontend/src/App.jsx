@@ -1,36 +1,54 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, SignIn, SignUp } from '@clerk/clerk-react';
 
-// We will build these beautiful pages next!
-import LandingPage from './LandingPage'; 
-import Login from './Login';
-import Signup from './Signup';
+import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
 
-// THE BOUNCER: Checks if the user has a VIP pass (JWT token) in their browser
-const ProtectedRoute = ({ children }) => {
-    const token = localStorage.getItem('access_token');
-    return token ? children : <Navigate to="/login" />;
-};
+// 🛑 PASTE YOUR CLERK KEY HERE!
+const clerkPubKey = "pk_test_aGVhbHRoeS1nb3NoYXdrLTU1LmNsZXJrLmFjY291bnRzLmRldiQ";
 
 export default function App() {
     return (
-        <Router>
-            <Routes>
-                {/* 🌍 PUBLIC ROUTES (Anyone can see these) */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
+        <ClerkProvider publishableKey={clerkPubKey}>
+            <Router>
+                <Routes>
+                    {/* 🌍 PUBLIC ROUTE: The Landing Page */}
+                    <Route path="/" element={<LandingPage />} />
 
-                {/* 🔒 PREMIUM LOCKED ROUTES (Must be logged in) */}
-                <Route 
-                    path="/dashboard" 
-                    element={
-                        <ProtectedRoute>
-                            <Dashboard />
-                        </ProtectedRoute>
-                    } 
-                />
-            </Routes>
-        </Router>
+                    {/* 🔐 CLERK'S PREMIUM AUTH PAGES */}
+                    <Route 
+                        path="/login/*" 
+                        element={
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0a0a0a' }}>
+                                <SignIn routing="path" path="/login" signUpUrl="/signup" forceRedirectUrl="/dashboard" appearance={{ baseTheme: 'dark' }} />
+                            </div>
+                        } 
+                    />
+                    <Route 
+                        path="/signup/*" 
+                        element={
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0a0a0a' }}>
+                                <SignUp routing="path" path="/signup" signInUrl="/login" forceRedirectUrl="/dashboard" appearance={{ baseTheme: 'dark' }} />
+                            </div>
+                        } 
+                    />
+
+                    {/* 🛡️ CLERK PROTECTED ROUTE: The Dashboard */}
+                    <Route 
+                        path="/dashboard" 
+                        element={
+                            <>
+                                <SignedIn>
+                                    <Dashboard />
+                                </SignedIn>
+                                <SignedOut>
+                                    <RedirectToSignIn />
+                                </SignedOut>
+                            </>
+                        } 
+                    />
+                </Routes>
+            </Router>
+        </ClerkProvider>
     );
 }

@@ -1,27 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Clock, Settings, LogOut, Zap, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
+import { Shield, Clock, Settings, Zap, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
+// 1. CLERK IMPORTS: Bring in the premium auth hooks!
+import { useUser, useAuth, UserButton } from '@clerk/clerk-react';
+
 export default function Dashboard() {
-    // 1. ALL STATE AND HOOKS GO AT THE VERY TOP
     const [activeTab, setActiveTab] = useState('scanner');
     const [targetUrl, setTargetUrl] = useState('');
     const [isScanning, setIsScanning] = useState(false);
     const [scanResult, setScanResult] = useState(null);
     const [error, setError] = useState('');
-    const [historyLogs, setHistoryLogs] = useState([]); // Moved up here!
+    const [historyLogs, setHistoryLogs] = useState([]);
     
-    const navigate = useNavigate();
+    // 2. CLERK HOOKS: Get the real user data and secure tokens!
+    const { user } = useUser(); 
+    const { getToken } = useAuth();
 
-    const handleLogout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        navigate('/login');
-    };
-
-    // 2. THE ENGINE: Fetches Scanner Results
+    // THE ENGINE: Fetches Scanner Results using Clerk's Secure Token
     const handleScan = async () => {
         if (!targetUrl) {
             setError("Please enter a URL to scan.");
@@ -33,7 +31,8 @@ export default function Dashboard() {
         setScanResult(null);
 
         try {
-            const token = localStorage.getItem('access_token');
+            // Grab Clerk's automatically generated secure VIP pass
+            const token = await getToken();
             const response = await axios.post(
                 'https://secureai-copilot-exnr.vercel.app/api/scan/', 
                 { domain_url: targetUrl },
@@ -47,13 +46,12 @@ export default function Dashboard() {
         }
     };
 
-    // 3. THE HISTORIAN: Fetches past scans (Moved up here!)
+    // THE HISTORIAN: Fetches past scans
     useEffect(() => {
         if (activeTab === 'history') {
             const fetchHistory = async () => {
                 try {
-                    // Note: Ensure we send the token so the backend knows whose history to fetch!
-                    const token = localStorage.getItem('access_token');
+                    const token = await getToken();
                     const response = await axios.get(
                         'https://secureai-copilot-exnr.vercel.app/api/history/',
                         { headers: { Authorization: `Bearer ${token}` } }
@@ -67,7 +65,60 @@ export default function Dashboard() {
         }
     }, [activeTab]);
 
-    // 4. THE UI: The return statement draws the screen
+    // THE CASH REGISTER: Razorpay Integration
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleUpgrade = async () => {
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded) {
+            alert('Razorpay failed to load. Please check your internet connection.');
+            return;
+        }
+
+        try {
+            const token = await getToken();
+            const response = await axios.post(
+                'https://secureai-copilot-exnr.vercel.app/api/subscribe/',
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const orderData = response.data;
+
+            const options = {
+                key: orderData.key_id, 
+                amount: orderData.amount,
+                currency: orderData.currency,
+                name: "SecureAI Copilot",
+                description: "Premium Lifetime Access",
+                order_id: orderData.order_id,
+                theme: { color: "#00ffcc" },
+                handler: function (response) {
+                    alert("Payment Successful! Welcome to Premium! Payment ID: " + response.razorpay_payment_id);
+                },
+                prefill: {
+                    // Pre-fill the Razorpay form with their REAL Clerk details!
+                    name: user?.fullName || "SecureAI User",
+                    email: user?.primaryEmailAddress?.emailAddress || "user@example.com",
+                }
+            };
+
+            const paymentObject = new window.Razorpay(options);
+            paymentObject.open();
+
+        } catch (err) {
+            console.error("Payment setup failed:", err);
+            alert("Could not initialize payment. Ensure your backend is running!");
+        }
+    };
+
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0a0a0a', color: 'white', fontFamily: 'system-ui, sans-serif' }}>
             
@@ -85,10 +136,10 @@ export default function Dashboard() {
                     <SidebarButton icon={<Settings />} label="Account Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                 </nav>
 
-                <div style={{ marginTop: 'auto', padding: '0 15px' }}>
-                    <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 20px', backgroundColor: 'transparent', color: '#ff4c4c', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 76, 76, 0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                        <LogOut size={20} /> Log Out
-                    </button>
+                <div style={{ marginTop: 'auto', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {/* 3. CLERK USER BUTTON: Handles Log Out and Profile automatically! */}
+                    <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: { width: '40px', height: '40px' } } }} />
+                    <span style={{ fontWeight: 'bold', color: '#ccc' }}>Log Out</span>
                 </div>
             </aside>
 
@@ -100,7 +151,7 @@ export default function Dashboard() {
                     {activeTab === 'scanner' && (
                         <div>
                             <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Threat Intelligence Scanner</h1>
-                            <p style={{ color: '#888', marginBottom: '40px' }}>Deploy AI models to detect vulnerabilities in your web assets.</p>
+                            <p style={{ color: '#888', marginBottom: '40px' }}>Welcome back, <span style={{color: '#00ffcc'}}>{user?.firstName || 'Admin'}</span>! Deploy AI models to detect vulnerabilities in your web assets.</p>
                             
                             <div style={{ backgroundColor: '#161616', border: '1px solid #333', padding: '30px', borderRadius: '12px', marginBottom: '30px' }}>
                                 <h3 style={{ marginTop: 0 }}>Target URL</h3>
@@ -142,12 +193,6 @@ export default function Dashboard() {
                                                 <small style={{ display: 'block', marginTop: '10px', color: '#888' }}>Confidence Score: {vuln.ml_confidence_score * 100}%</small>
                                             </div>
                                         ))}
-                                        
-                                        {(!scanResult.vulnerabilities || scanResult.vulnerabilities.length === 0) && (
-                                            <div style={{ padding: '20px', backgroundColor: 'rgba(0, 255, 204, 0.1)', borderRadius: '8px', color: '#00ffcc' }}>
-                                                No vulnerabilities detected! The asset appears secure against our current model parameters.
-                                            </div>
-                                        )}
                                     </div>
                                 </motion.div>
                             )}
@@ -172,11 +217,6 @@ export default function Dashboard() {
                                                 <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Target: {log.asset?.domain_url || 'Unknown Asset'}</h3>
                                                 <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>Status: {log.status}</p>
                                             </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <span style={{ display: 'inline-block', padding: '5px 12px', borderRadius: '20px', backgroundColor: log.vulnerabilities?.length > 0 ? 'rgba(255, 76, 76, 0.1)' : 'rgba(0, 255, 204, 0.1)', color: log.vulnerabilities?.length > 0 ? '#ff4c4c' : '#00ffcc', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                                                    {log.vulnerabilities?.length || 0} Threats Found
-                                                </span>
-                                            </div>
                                         </div>
                                     ))
                                 )}
@@ -189,21 +229,24 @@ export default function Dashboard() {
                         <div>
                             <h1 style={{ fontSize: '2rem', marginBottom: '30px' }}>Account Settings</h1>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                                
+                                {/* 4. REAL PROFILE DATA: Injected from Clerk! */}
                                 <div style={{ backgroundColor: '#161616', border: '1px solid #333', padding: '30px', borderRadius: '12px' }}>
-                                    <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><User size={20} /> Profile Details</h3>
+                                    <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><User size={20} /> Verified Profile</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-                                        <input type="text" defaultValue="admin_binit" placeholder="Username" style={{ padding: '12px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#0a0a0a', color: 'white' }} />
-                                        <input type="email" placeholder="Email Address" style={{ padding: '12px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#0a0a0a', color: 'white' }} />
-                                        <button style={{ padding: '12px', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Save Changes</button>
+                                        <input type="text" value={user?.fullName || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#888', cursor: 'not-allowed' }} />
+                                        <input type="email" value={user?.primaryEmailAddress?.emailAddress || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#888', cursor: 'not-allowed' }} />
+                                        <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>Managed securely via Clerk. Click your avatar in the sidebar to edit.</p>
                                     </div>
                                 </div>
+                                
                                 <div style={{ backgroundColor: 'rgba(0, 255, 204, 0.05)', border: '1px solid rgba(0, 255, 204, 0.2)', padding: '30px', borderRadius: '12px' }}>
                                     <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#00ffcc' }}><Zap size={20} /> Subscription Plan</h3>
                                     <h1 style={{ margin: '10px 0', fontSize: '2.5rem' }}>Free Tier</h1>
                                     <p style={{ color: '#aaa', marginBottom: '25px', lineHeight: '1.5' }}>
                                         You are currently on the free plan. Upgrade to Premium for advanced AI analysis, API access, and automated weekly audits.
                                     </p>
-                                    <button style={{ width: '100%', padding: '15px', backgroundColor: '#00ffcc', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
+                                    <button onClick={handleUpgrade} style={{ width: '100%', padding: '15px', backgroundColor: '#00ffcc', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
                                         Upgrade with Razorpay
                                     </button>
                                 </div>
@@ -217,7 +260,6 @@ export default function Dashboard() {
     );
 }
 
-// Reusable Button Component for the Sidebar
 function SidebarButton({ icon, label, active, onClick }) {
     return (
         <button 

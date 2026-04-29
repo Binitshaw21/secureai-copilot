@@ -1,8 +1,7 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenObtainPairView
 from . import views
 
 urlpatterns = [
-    path('signup/', views.RegisterView.as_view(), name='signup'),
-    path('login/', TokenObtainPairView.as_view(), name='login'),
+    # This catches the exact "/api/scan/" request from your React frontend!
+    path('scan/', views.scan_url, name='scan'),
 ]

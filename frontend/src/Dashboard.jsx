@@ -31,10 +31,10 @@ export default function Dashboard() {
         setScanResult(null);
 
         try {
-            // Grab Clerk's automatically generated secure VIP pass
             const token = await getToken();
             const response = await axios.post(
-                'https://secureai-copilot-exnr.vercel.app/api/scan/', 
+                // 👇 POINTING TO YOUR NEW, WORKING BACKEND 👇
+                'https://secureai-copilot-tdee.vercel.app/api/scan/', 
                 { domain_url: targetUrl },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -53,7 +53,8 @@ export default function Dashboard() {
                 try {
                     const token = await getToken();
                     const response = await axios.get(
-                        'https://secureai-copilot-exnr.vercel.app/api/history/',
+                        // 👇 POINTING TO YOUR NEW, WORKING BACKEND 👇
+                        'https://secureai-copilot-tdee.vercel.app/api/history/',
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                     setHistoryLogs(response.data);
@@ -86,7 +87,8 @@ export default function Dashboard() {
         try {
             const token = await getToken();
             const response = await axios.post(
-                'https://secureai-copilot-exnr.vercel.app/api/subscribe/',
+                // 👇 POINTING TO YOUR NEW, WORKING BACKEND 👇
+                'https://secureai-copilot-tdee.vercel.app/api/subscribe/',
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -104,7 +106,6 @@ export default function Dashboard() {
                     alert("Payment Successful! Welcome to Premium! Payment ID: " + response.razorpay_payment_id);
                 },
                 prefill: {
-                    // Pre-fill the Razorpay form with their REAL Clerk details!
                     name: user?.fullName || "SecureAI User",
                     email: user?.primaryEmailAddress?.emailAddress || "user@example.com",
                 }

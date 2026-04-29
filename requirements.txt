@@ -6,6 +6,6 @@ psycopg2-binary
 dj-database-url
 python-dotenv
 razorpay
-google-generativeai
+google-genai
 requests
 gunicorn

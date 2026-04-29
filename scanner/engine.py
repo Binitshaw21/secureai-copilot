@@ -2,11 +2,16 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
+
+# --- THE NEW IMPORT ---
+from google import genai
 
 # Load the secret key from your .env file
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
+# --- THE NEW CLIENT INITIALIZATION ---
+# It automatically looks for the GEMINI_API_KEY environment variable!
+client = genai.Client()
 
 def run_security_scan(target_url):
     domain = target_url.replace("https://", "").replace("http://", "").split('/')[0]
@@ -42,9 +47,11 @@ def run_security_scan(target_url):
     """
     
     try:
-        # We use the latest 2.5 Flash model for near-instant API responses
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        response = model.generate_content(prompt)
+        # --- THE NEW WAY TO GENERATE CONTENT ---
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
         
         # Clean the response and convert it to a Python dictionary
         text_response = response.text.strip()

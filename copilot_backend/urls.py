@@ -18,3 +18,7 @@ from scanner.views import get_scan_history
 
 # ... inside your urlpatterns list, add this line:
 path('api/history/', get_scan_history),
+from scanner.views import get_scan_history, create_subscription # <-- Add the new import here!
+
+# ... inside your urlpatterns list, add this line:
+path('api/subscribe/', create_subscription),

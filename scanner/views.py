@@ -1,3 +1,5 @@
+import razorpay
+from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -59,3 +61,30 @@ def get_scan_history(request):
     # Translate it to JSON and send it to React
     serializer = ScanLogSerializer(logs, many=True)
     return Response(serializer.data)
+# Initialize Razorpay Client
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+@api_view(['POST'])
+def create_subscription(request):
+    try:
+        # We charge ₹999 for the Premium Tier (Razorpay calculates in paise, so multiply by 100)
+        amount = 999 * 100 
+        currency = "INR"
+
+        # Ask Razorpay to create a secure order
+        razorpay_order = razorpay_client.order.create(dict(
+            amount=amount,
+            currency=currency,
+            payment_capture='0'
+        ))
+
+        # Send the order ID back to React so it can open the payment popup
+        return Response({
+            'order_id': razorpay_order['id'],
+            'amount': amount,
+            'currency': currency,
+            'key_id': settings.RAZORPAY_KEY_ID
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

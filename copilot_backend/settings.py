@@ -148,3 +148,6 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # Keeps them logged in for a week if they stay active
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+# RAZORPAY SETTINGS (Test Keys)
+RAZORPAY_KEY_ID = 'rzp_test_YourKeyIdHere'
+RAZORPAY_KEY_SECRET = 'YourSecretKeyHere'

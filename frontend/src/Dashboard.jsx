@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Clock, Settings, LogOut, Zap, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
 export default function Dashboard() {
+    // 1. ALL STATE AND HOOKS GO AT THE VERY TOP
     const [activeTab, setActiveTab] = useState('scanner');
     const [targetUrl, setTargetUrl] = useState('');
     const [isScanning, setIsScanning] = useState(false);
     const [scanResult, setScanResult] = useState(null);
     const [error, setError] = useState('');
+    const [historyLogs, setHistoryLogs] = useState([]); // Moved up here!
     
     const navigate = useNavigate();
 
@@ -19,7 +21,7 @@ export default function Dashboard() {
         navigate('/login');
     };
 
-    // THE ENGINE: This calls your Python backend!
+    // 2. THE ENGINE: Fetches Scanner Results
     const handleScan = async () => {
         if (!targetUrl) {
             setError("Please enter a URL to scan.");
@@ -31,16 +33,12 @@ export default function Dashboard() {
         setScanResult(null);
 
         try {
-            // Grab the VIP pass to prove we are logged in
             const token = localStorage.getItem('access_token');
-            
             const response = await axios.post(
-                'https://secureai-copilot-exnr.vercel.app/api/scan/', // Replace /api/scan/ with your actual backend url route if different!
+                'https://secureai-copilot-exnr.vercel.app/api/scan/', 
                 { domain_url: targetUrl },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-
-            // Save the results from Python to display them!
             setScanResult(response.data);
         } catch (err) {
             setError("Scan failed. Ensure your backend is running and the URL is correct.");
@@ -49,6 +47,27 @@ export default function Dashboard() {
         }
     };
 
+    // 3. THE HISTORIAN: Fetches past scans (Moved up here!)
+    useEffect(() => {
+        if (activeTab === 'history') {
+            const fetchHistory = async () => {
+                try {
+                    // Note: Ensure we send the token so the backend knows whose history to fetch!
+                    const token = localStorage.getItem('access_token');
+                    const response = await axios.get(
+                        'https://secureai-copilot-exnr.vercel.app/api/history/',
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    setHistoryLogs(response.data);
+                } catch (err) {
+                    console.error("Failed to load history");
+                }
+            };
+            fetchHistory();
+        }
+    }, [activeTab]);
+
+    // 4. THE UI: The return statement draws the screen
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0a0a0a', color: 'white', fontFamily: 'system-ui, sans-serif' }}>
             
@@ -135,13 +154,32 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    {/* TAB: HISTORY (Placeholder) */}
+                    {/* TAB: HISTORY */}
                     {activeTab === 'history' && (
                         <div>
                             <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Scan History</h1>
                             <p style={{ color: '#888', marginBottom: '40px' }}>Review your past security audits and reports.</p>
-                            <div style={{ padding: '40px', textAlign: 'center', border: '1px dashed #444', borderRadius: '12px', color: '#666' }}>
-                                History module locked. Run more scans to populate data!
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                {historyLogs.length === 0 ? (
+                                    <div style={{ padding: '40px', textAlign: 'center', border: '1px dashed #444', borderRadius: '12px', color: '#666' }}>
+                                        Loading past scans... (or no scans exist yet!)
+                                    </div>
+                                ) : (
+                                    historyLogs.map((log, index) => (
+                                        <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#161616', border: '1px solid #333', padding: '20px', borderRadius: '12px' }}>
+                                            <div>
+                                                <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Target: {log.asset?.domain_url || 'Unknown Asset'}</h3>
+                                                <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>Status: {log.status}</p>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <span style={{ display: 'inline-block', padding: '5px 12px', borderRadius: '20px', backgroundColor: log.vulnerabilities?.length > 0 ? 'rgba(255, 76, 76, 0.1)' : 'rgba(0, 255, 204, 0.1)', color: log.vulnerabilities?.length > 0 ? '#ff4c4c' : '#00ffcc', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                                                    {log.vulnerabilities?.length || 0} Threats Found
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     )}

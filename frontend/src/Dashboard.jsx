@@ -151,10 +151,9 @@ export default function Dashboard() {
                                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ backgroundColor: '#1e293b', padding: '40px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto' }}>
                                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                                         <h2 style={{ marginTop: 0, color: '#fff', fontSize: '1.8rem', fontWeight: 'bold' }}>Scan Complete</h2>
-                                        <p style={{ color: '#cbd5e1', fontSize: '1rem', margin: '5px 0 0 0' }}>Target: {scanResult.asset?.domain_url || targetUrl}</p>
+                                        <p style={{ color: '#cbd5e1', fontSize: '1rem', margin: '5px 0 0 0' }}>Target: {scanResult.domain_url || targetUrl}</p>
                                     </div>
                                     
-                                    {/* GREEN SECURE STATE (if 0 issues found) */}
                                     {scanResult.vulnerabilities?.length === 0 && (
                                         <div style={{ padding: '20px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '8px', textAlign: 'center' }}>
                                             <p style={{ color: '#10b981', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
@@ -165,17 +164,15 @@ export default function Dashboard() {
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                         {scanResult.vulnerabilities?.map((vuln, idx) => {
-                                            
-                                            // DYNAMIC COLORS MATCHING YOUR SCREENSHOT EXACTLY!
                                             let borderColor = '#475569'; 
                                             let badgeBg = '#334155';
                                             
                                             if (vuln.severity === 'CRITICAL') {
-                                                borderColor = '#ef4444'; // Red
+                                                borderColor = '#ef4444'; 
                                             } else if (vuln.severity === 'HIGH' || vuln.severity === 'MEDIUM') {
-                                                borderColor = '#f59e0b'; // Orange
+                                                borderColor = '#f59e0b'; 
                                             } else if (vuln.severity === 'LOW') {
-                                                borderColor = '#10b981'; // Green
+                                                borderColor = '#10b981'; 
                                             }
 
                                             return (
@@ -219,7 +216,7 @@ export default function Dashboard() {
                                             <div key={index} onClick={() => setExpandedLogId(isExpanded ? null : log.id)} style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '20px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <div>
-                                                        <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Target: {log.asset?.domain_url || `Security Scan #${log.id}`}</h3>
+                                                        <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Target: {log.domain_url || 'Unknown URL'}</h3>
                                                         <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#3b82f6' : '#f59e0b' }}>{log.status}</span></p>
                                                     </div>
                                                     <div style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '0.9rem' }}>{isExpanded ? 'Hide Details ▲' : 'View Results ▼'}</div>

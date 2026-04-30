@@ -15,7 +15,9 @@ export default function Dashboard() {
     const [error, setError] = useState('');
     const [historyLogs, setHistoryLogs] = useState([]);
     
-    // 2. CLERK USER
+    // NEW: State to track which history item is clicked/expanded
+    const [expandedLogId, setExpandedLogId] = useState(null);
+    
     const { user } = useUser(); 
 
     // THE ENGINE: Fetches Scanner Results
@@ -30,7 +32,6 @@ export default function Dashboard() {
         setScanResult(null);
 
         try {
-            // 👇 REMOVED THE CLERK TOKEN SO DJANGO DOESN'T CRASH 👇
             const response = await axios.post(
                 'https://secureai-copilot-exnr.vercel.app/api/scan/', 
                 { domain_url: targetUrl }
@@ -48,7 +49,6 @@ export default function Dashboard() {
         if (activeTab === 'history') {
             const fetchHistory = async () => {
                 try {
-                    // 👇 REMOVED THE CLERK TOKEN 👇
                     const response = await axios.get(
                         'https://secureai-copilot-exnr.vercel.app/api/history/'
                     );
@@ -80,7 +80,6 @@ export default function Dashboard() {
         }
 
         try {
-            // 👇 REMOVED THE CLERK TOKEN 👇
             const response = await axios.post(
                 'https://secureai-copilot-exnr.vercel.app/api/subscribe/',
                 {}
@@ -178,12 +177,11 @@ export default function Dashboard() {
                                     
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                         {scanResult.vulnerabilities?.map((vuln, idx) => (
-                                            <div key={idx} style={{ padding: '20px', backgroundColor: '#2d2d2d', borderRadius: '8px', borderLeft: vuln.severity === 'HIGH' ? '4px solid #ff4c4c' : '4px solid #f39c12' }}>
-                                                <h3 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '10px', color: vuln.severity === 'HIGH' ? '#ff4c4c' : '#f39c12' }}>
+                                            <div key={idx} style={{ padding: '20px', backgroundColor: '#2d2d2d', borderRadius: '8px', borderLeft: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '4px solid #ff4c4c' : '4px solid #f39c12' }}>
+                                                <h3 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '10px', color: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '#ff4c4c' : '#f39c12' }}>
                                                     <AlertTriangle size={18} /> {vuln.technical_name}
                                                 </h3>
                                                 <p style={{ margin: 0, color: '#ccc' }}>{vuln.plain_language_alert}</p>
-                                                <small style={{ display: 'block', marginTop: '10px', color: '#888' }}>Confidence Score: {vuln.ml_confidence_score * 100}%</small>
                                             </div>
                                         ))}
                                     </div>
@@ -204,14 +202,56 @@ export default function Dashboard() {
                                         Loading past scans... (or no scans exist yet!)
                                     </div>
                                 ) : (
-                                    historyLogs.map((log, index) => (
-                                        <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#161616', border: '1px solid #333', padding: '20px', borderRadius: '12px' }}>
-                                            <div>
-                                                <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Security Scan #{log.id}</h3>
-                                                <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>Status: {log.status}</p>
+                                    historyLogs.map((log, index) => {
+                                        // 1. Format the date beautifully
+                                        const scanDate = log.created_at || log.timestamp 
+                                            ? new Date(log.created_at || log.timestamp).toLocaleString() 
+                                            : 'Recent Scan';
+                                        
+                                        // 2. Check if this specific log is clicked
+                                        const isExpanded = expandedLogId === log.id;
+
+                                        return (
+                                            <div 
+                                                key={index} 
+                                                onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                                                style={{ backgroundColor: '#161616', border: '1px solid #333', padding: '20px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }}
+                                            >
+                                                {/* History Card Header */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <div>
+                                                        <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>
+                                                            Target: {log.asset?.domain_url || `Security Scan #${log.id}`}
+                                                        </h3>
+                                                        <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>
+                                                            Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#00ffcc' : '#f39c12' }}>{log.status}</span>
+                                                        </p>
+                                                    </div>
+                                                    <div style={{ color: '#00ffcc', fontWeight: 'bold' }}>
+                                                        {isExpanded ? 'Hide Details ▲' : 'View Results ▼'}
+                                                    </div>
+                                                </div>
+
+                                                {/* History Card Dropdown Details */}
+                                                {isExpanded && log.vulnerabilities && (
+                                                    <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                        {log.vulnerabilities.length === 0 ? (
+                                                            <p style={{ color: '#00ffcc', margin: 0 }}>No vulnerabilities found. Asset is secure.</p>
+                                                        ) : (
+                                                            log.vulnerabilities.map((vuln, idx) => (
+                                                                <div key={idx} style={{ padding: '15px', backgroundColor: '#2d2d2d', borderRadius: '8px', borderLeft: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '4px solid #ff4c4c' : '4px solid #f39c12' }}>
+                                                                    <h4 style={{ margin: '0 0 5px 0', display: 'flex', alignItems: 'center', gap: '10px', color: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '#ff4c4c' : '#f39c12' }}>
+                                                                        <AlertTriangle size={16} /> {vuln.technical_name}
+                                                                    </h4>
+                                                                    <p style={{ margin: 0, color: '#ccc', fontSize: '0.9rem' }}>{vuln.plain_language_alert}</p>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

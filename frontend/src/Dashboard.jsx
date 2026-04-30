@@ -33,8 +33,8 @@ export default function Dashboard() {
         try {
             const token = await getToken();
             const response = await axios.post(
-                // 👇 POINTING TO YOUR NEW, WORKING BACKEND 👇
-                'https://secureai-copilot-tdee.vercel.app/api/scan/', 
+                // 👇 POINTING TO YOUR HEALTHY EXNR BACKEND 👇
+                'https://secureai-copilot-exnr.vercel.app/api/scan/', 
                 { domain_url: targetUrl },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -53,8 +53,8 @@ export default function Dashboard() {
                 try {
                     const token = await getToken();
                     const response = await axios.get(
-                        // 👇 POINTING TO YOUR NEW, WORKING BACKEND 👇
-                        'https://secureai-copilot-tdee.vercel.app/api/history/',
+                        // 👇 POINTING TO YOUR HEALTHY EXNR BACKEND 👇
+                        'https://secureai-copilot-exnr.vercel.app/api/history/',
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                     setHistoryLogs(response.data);
@@ -87,8 +87,8 @@ export default function Dashboard() {
         try {
             const token = await getToken();
             const response = await axios.post(
-                // 👇 POINTING TO YOUR NEW, WORKING BACKEND 👇
-                'https://secureai-copilot-tdee.vercel.app/api/subscribe/',
+                // 👇 POINTING TO YOUR HEALTHY EXNR BACKEND 👇
+                'https://secureai-copilot-exnr.vercel.app/api/subscribe/',
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );

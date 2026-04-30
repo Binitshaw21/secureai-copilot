@@ -1,65 +1,92 @@
+import os
 import requests
 import json
-import os
-from dotenv import load_dotenv
 from google import genai
 
-# Load the secret key from your .env file
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
-
 def run_security_scan(target_url):
-    # --- MOVED INSIDE THE FUNCTION ---
-    # This prevents the server from crashing on boot if the key loads a millisecond late!
-    client = genai.Client()
+    """
+    Hybrid AI Scanner: Python gathers the raw facts, Gemini writes the report.
+    """
+    raw_vulnerabilities = []
     
+    # Clean the URL
     domain = target_url.replace("https://", "").replace("http://", "").split('/')[0]
-    raw_findings = []
-    
-    # --- 1. Perform the raw technical checks ---
-    if not target_url.startswith("https"):
-        raw_findings.append("Missing TLS/SSL Encryption")
-        
-    try:
-        response = requests.get(f"https://{domain}", timeout=5)
-        if 'Content-Security-Policy' not in response.headers:
-            raw_findings.append("Missing Content-Security-Policy (CSP) Header")
-        if 'Strict-Transport-Security' not in response.headers:
-            raw_findings.append("Missing HSTS Header")
-    except:
-        raw_findings.append("Host Unreachable or Blocking Automated Scans")
 
-    if not raw_findings:
+    # --- PART 1: PYTHON GATHERS RAW DATA ---
+    if not target_url.startswith("https"):
+        raw_vulnerabilities.append("Missing TLS/SSL Encryption")
+
+    try:
+        # We use a user-agent so firewalls don't block our scan immediately
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(f"http://{domain}", headers=headers, timeout=5)
+        
+        # Check for missing security headers
+        if 'Content-Security-Policy' not in response.headers:
+            raw_vulnerabilities.append("Missing Content-Security-Policy (CSP) Header")
+        if 'Strict-Transport-Security' not in response.headers:
+            raw_vulnerabilities.append("Missing Strict-Transport-Security (HSTS) Header")
+        if 'X-Frame-Options' not in response.headers:
+            raw_vulnerabilities.append("Missing X-Frame-Options (Clickjacking vulnerability)")
+            
+    except requests.exceptions.RequestException:
+        raw_vulnerabilities.append("Host Unreachable or actively blocking Automated Scans")
+
+    # If the list is empty, the site is perfectly secure!
+    if not raw_vulnerabilities:
         return []
 
-    # --- 2. Inject the AI to translate for the user ---
+
+    # --- PART 2: GEMINI AI WRITES THE REPORT ---
+    # We grab the API key from Vercel's environment variables
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("No API key was provided. Check Vercel Environment Variables.")
+
+    client = genai.Client(api_key=api_key)
+    
+    # We ask the AI to naturally explain the technical flaws Python found
     prompt = f"""
-    You are a cybersecurity expert consulting for a small business. 
-    We scanned their website ({domain}) and found these technical issues: {', '.join(raw_findings)}.
+    Act as a professional cybersecurity expert. I have scanned a website and found these exact technical issues: 
+    {raw_vulnerabilities}
     
-    Return a JSON array of objects. Each object must have exactly these keys:
-    - "technical_name": The exact technical name of the issue.
-    - "plain_language_alert": A 1-2 sentence explanation of the risk written for a non-technical small business owner. Be helpful, not terrifying.
-    - "severity": "CRITICAL", "HIGH", "MEDIUM", or "LOW".
+    For each issue, write a natural, plain-language explanation for a business owner explaining what it means and why it is dangerous. 
+    Assign a severity of either CRITICAL, HIGH, MEDIUM, or LOW based on your cybersecurity knowledge.
     
-    Only output valid JSON. Do not include markdown formatting like ```json.
+    You MUST respond ONLY with a valid JSON array of objects. Do not include markdown blocks.
+    Format exactly like this:
+    [
+        {{
+            "technical_name": "[Insert Technical Name]",
+            "severity": "[CRITICAL/HIGH/MEDIUM/LOW]",
+            "plain_language_alert": "[Your natural AI explanation here]"
+        }}
+    ]
     """
-    
+
     try:
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
         )
         
-        text_response = response.text.strip()
-        if text_response.startswith("```json"):
-            text_response = text_response[7:-3]
+        # Clean the AI's text to ensure it is perfect JSON
+        text = response.text.strip()
+        if text.startswith("```json"): 
+            text = text[7:-3]
+        elif text.startswith("```"): 
+            text = text[3:-3]
             
-        return json.loads(text_response)
+        ai_generated_report = json.loads(text.strip())
+        return ai_generated_report
         
     except Exception as e:
-        print(f"AI Error: {e}")
-        return [{
-            "technical_name": "Raw Vulnerabilities Detected", 
-            "plain_language_alert": f"We found: {', '.join(raw_findings)}. AI generation temporarily unavailable.", 
-            "severity": "MEDIUM"
-        }]
+        print("AI Engine Error:", e)
+        # Safe fallback if the AI takes too long to respond during your presentation
+        return [
+            {
+                "technical_name": issue,
+                "severity": "HIGH",
+                "plain_language_alert": "Vulnerability detected. The AI analysis engine is currently processing a heavy load."
+            } for issue in raw_vulnerabilities
+        ]

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Clock, Settings, Zap, User, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
+import { Shield, Clock, Settings, Zap, User, AlertTriangle, Loader } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
@@ -15,7 +15,7 @@ export default function Dashboard() {
     const [error, setError] = useState('');
     const [historyLogs, setHistoryLogs] = useState([]);
     
-    // NEW: State to track which history item is clicked/expanded
+    // State to track which history item is clicked/expanded
     const [expandedLogId, setExpandedLogId] = useState(null);
     
     const { user } = useUser(); 
@@ -113,13 +113,13 @@ export default function Dashboard() {
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0a0a0a', color: 'white', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontFamily: 'system-ui, sans-serif' }}>
             
             {/* LEFT SIDEBAR */}
-            <aside style={{ width: '260px', backgroundColor: '#121212', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', padding: '20px 0' }}>
+            <aside style={{ width: '260px', backgroundColor: '#0b1120', borderRight: '1px solid #1e293b', display: 'flex', flexDirection: 'column', padding: '20px 0' }}>
                 <div style={{ padding: '0 25px', marginBottom: '40px' }}>
                     <h2 style={{ margin: 0, color: '#fff', fontWeight: '800', letterSpacing: '1px' }}>
-                        SecureAI <span style={{ color: '#00ffcc' }}>Copilot</span>
+                        SecureAI <span style={{ color: '#3b82f6' }}>Copilot</span>
                     </h2>
                 </div>
 
@@ -131,7 +131,7 @@ export default function Dashboard() {
 
                 <div style={{ marginTop: 'auto', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: { width: '40px', height: '40px' } } }} />
-                    <span style={{ fontWeight: 'bold', color: '#ccc' }}>Log Out</span>
+                    <span style={{ fontWeight: 'bold', color: '#9ca3af' }}>Log Out</span>
                 </div>
             </aside>
 
@@ -142,48 +142,68 @@ export default function Dashboard() {
                     {/* TAB: NEW SCANNER */}
                     {activeTab === 'scanner' && (
                         <div>
-                            <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Threat Intelligence Scanner</h1>
-                            <p style={{ color: '#888', marginBottom: '40px' }}>Welcome back, <span style={{color: '#00ffcc'}}>{user?.firstName || 'Admin'}</span>! Deploy AI models to detect vulnerabilities in your web assets.</p>
-                            
-                            <div style={{ backgroundColor: '#161616', border: '1px solid #333', padding: '30px', borderRadius: '12px', marginBottom: '30px' }}>
-                                <h3 style={{ marginTop: 0 }}>Target URL</h3>
-                                <div style={{ display: 'flex', gap: '15px' }}>
-                                    <input 
-                                        type="url" 
-                                        placeholder="https://example.com" 
-                                        value={targetUrl}
-                                        onChange={(e) => setTargetUrl(e.target.value)}
-                                        style={{ flex: 1, padding: '15px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#0a0a0a', color: 'white', fontSize: '1.1rem' }} 
-                                    />
-                                    <button 
-                                        onClick={handleScan}
-                                        disabled={isScanning}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 30px', backgroundColor: isScanning ? '#333' : '#00ffcc', color: isScanning ? '#888' : '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: isScanning ? 'not-allowed' : 'pointer', boxShadow: isScanning ? 'none' : '0 0 15px rgba(0, 255, 204, 0.3)' }}
-                                    >
-                                        {isScanning ? <Loader className="animate-spin" size={20} /> : <Shield size={20} />}
-                                        {isScanning ? 'Analyzing...' : 'Launch Scan'}
-                                    </button>
-                                </div>
-                                {error && <p style={{ color: '#ff4c4c', marginTop: '15px' }}>{error}</p>}
+                            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                                <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Threat Intelligence Scanner</h1>
+                                <p style={{ color: '#9ca3af' }}>Welcome back, <span style={{color: '#3b82f6'}}>{user?.firstName || 'Admin'}</span>! Deploy AI models to detect vulnerabilities in your web assets.</p>
                             </div>
+                            
+                            <div style={{ display: 'flex', gap: '15px', maxWidth: '800px', margin: '0 auto 40px auto' }}>
+                                <input 
+                                    type="url" 
+                                    placeholder="http://example.com" 
+                                    value={targetUrl}
+                                    onChange={(e) => setTargetUrl(e.target.value)}
+                                    style={{ flex: 1, padding: '15px 20px', borderRadius: '8px', border: '1px solid #1e293b', backgroundColor: '#1e293b', color: 'white', fontSize: '1.1rem', outline: 'none' }} 
+                                />
+                                <button 
+                                    onClick={handleScan}
+                                    disabled={isScanning}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 30px', backgroundColor: isScanning ? '#334155' : '#3b82f6', color: isScanning ? '#9ca3af' : '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: isScanning ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
+                                >
+                                    {isScanning ? <Loader className="animate-spin" size={20} /> : <Shield size={20} />}
+                                    {isScanning ? 'Analyzing...' : 'Scan Now'}
+                                </button>
+                            </div>
+                            {error && <p style={{ color: '#ef4444', textAlign: 'center' }}>{error}</p>}
 
-                            {/* RESULTS PANEL */}
+                            {/* EXCACT REPLICA RESULTS PANEL */}
                             {scanResult && (
-                                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ backgroundColor: '#1e1e1e', border: '1px solid #333', padding: '30px', borderRadius: '12px' }}>
-                                    <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#00ffcc' }}>
-                                        <CheckCircle /> Scan Complete
-                                    </h2>
-                                    <p style={{ color: '#aaa', marginBottom: '20px' }}>Target: {scanResult.asset?.domain_url || targetUrl}</p>
+                                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ backgroundColor: '#1e293b', padding: '40px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto' }}>
+                                    <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                                        <h2 style={{ marginTop: 0, color: '#fff', fontSize: '1.8rem', fontWeight: 'bold' }}>Scan Complete</h2>
+                                        <p style={{ color: '#cbd5e1', fontSize: '1rem', margin: '5px 0 0 0' }}>Target: {scanResult.asset?.domain_url || targetUrl}</p>
+                                    </div>
                                     
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                        {scanResult.vulnerabilities?.map((vuln, idx) => (
-                                            <div key={idx} style={{ padding: '20px', backgroundColor: '#2d2d2d', borderRadius: '8px', borderLeft: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '4px solid #ff4c4c' : '4px solid #f39c12' }}>
-                                                <h3 style={{ margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '10px', color: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '#ff4c4c' : '#f39c12' }}>
-                                                    <AlertTriangle size={18} /> {vuln.technical_name}
-                                                </h3>
-                                                <p style={{ margin: 0, color: '#ccc' }}>{vuln.plain_language_alert}</p>
-                                            </div>
-                                        ))}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        {scanResult.vulnerabilities?.map((vuln, idx) => {
+                                            // Exact colors from your screenshot
+                                            let borderColor = '#475569'; 
+                                            let badgeBg = '#334155';
+                                            
+                                            if (vuln.severity === 'CRITICAL') {
+                                                borderColor = '#ef4444'; // Red border
+                                                badgeBg = '#334155';     // Gray badge background
+                                            } else if (vuln.severity === 'HIGH') {
+                                                borderColor = '#9ca3af'; // Gray border
+                                                badgeBg = '#334155';     // Gray badge background
+                                            }
+
+                                            return (
+                                                <div key={idx} style={{ padding: '25px', backgroundColor: '#0f172a', borderRadius: '8px', borderLeft: `4px solid ${borderColor}` }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                                        <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                                                            {vuln.technical_name}
+                                                        </h3>
+                                                        <span style={{ padding: '4px 12px', backgroundColor: badgeBg, color: '#fff', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px' }}>
+                                                            {vuln.severity || 'UNKNOWN'}
+                                                        </span>
+                                                    </div>
+                                                    <p style={{ margin: 0, color: '#9ca3af', lineHeight: '1.6', fontSize: '1rem' }}>
+                                                        {vuln.plain_language_alert}
+                                                    </p>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </motion.div>
                             )}
@@ -192,60 +212,64 @@ export default function Dashboard() {
 
                     {/* TAB: HISTORY */}
                     {activeTab === 'history' && (
-                        <div>
-                            <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Scan History</h1>
-                            <p style={{ color: '#888', marginBottom: '40px' }}>Review your past security audits and reports.</p>
+                        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                                <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Scan History</h1>
+                                <p style={{ color: '#9ca3af' }}>Review your past security audits and reports.</p>
+                            </div>
                             
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                 {historyLogs.length === 0 ? (
-                                    <div style={{ padding: '40px', textAlign: 'center', border: '1px dashed #444', borderRadius: '12px', color: '#666' }}>
+                                    <div style={{ padding: '40px', textAlign: 'center', border: '1px dashed #334155', borderRadius: '12px', color: '#9ca3af' }}>
                                         Loading past scans... (or no scans exist yet!)
                                     </div>
                                 ) : (
                                     historyLogs.map((log, index) => {
-                                        // 1. Format the date beautifully
-                                        const scanDate = log.created_at || log.timestamp 
-                                            ? new Date(log.created_at || log.timestamp).toLocaleString() 
-                                            : 'Recent Scan';
-                                        
-                                        // 2. Check if this specific log is clicked
+                                        const scanDate = log.created_at || log.timestamp ? new Date(log.created_at || log.timestamp).toLocaleString() : 'Recent Scan';
                                         const isExpanded = expandedLogId === log.id;
 
                                         return (
                                             <div 
                                                 key={index} 
                                                 onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
-                                                style={{ backgroundColor: '#161616', border: '1px solid #333', padding: '20px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }}
+                                                style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '20px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }}
                                             >
-                                                {/* History Card Header */}
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <div>
                                                         <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>
                                                             Target: {log.asset?.domain_url || `Security Scan #${log.id}`}
                                                         </h3>
-                                                        <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>
-                                                            Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#00ffcc' : '#f39c12' }}>{log.status}</span>
+                                                        <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>
+                                                            Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#3b82f6' : '#f59e0b' }}>{log.status}</span>
                                                         </p>
                                                     </div>
-                                                    <div style={{ color: '#00ffcc', fontWeight: 'bold' }}>
+                                                    <div style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '0.9rem' }}>
                                                         {isExpanded ? 'Hide Details ▲' : 'View Results ▼'}
                                                     </div>
                                                 </div>
 
-                                                {/* History Card Dropdown Details */}
+                                                {/* History Dropdown showing exact replica design */}
                                                 {isExpanded && log.vulnerabilities && (
-                                                    <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                    <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                         {log.vulnerabilities.length === 0 ? (
-                                                            <p style={{ color: '#00ffcc', margin: 0 }}>No vulnerabilities found. Asset is secure.</p>
+                                                            <p style={{ color: '#3b82f6', margin: 0 }}>No vulnerabilities found. Asset is secure.</p>
                                                         ) : (
-                                                            log.vulnerabilities.map((vuln, idx) => (
-                                                                <div key={idx} style={{ padding: '15px', backgroundColor: '#2d2d2d', borderRadius: '8px', borderLeft: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '4px solid #ff4c4c' : '4px solid #f39c12' }}>
-                                                                    <h4 style={{ margin: '0 0 5px 0', display: 'flex', alignItems: 'center', gap: '10px', color: vuln.severity === 'HIGH' || vuln.severity === 'CRITICAL' ? '#ff4c4c' : '#f39c12' }}>
-                                                                        <AlertTriangle size={16} /> {vuln.technical_name}
-                                                                    </h4>
-                                                                    <p style={{ margin: 0, color: '#ccc', fontSize: '0.9rem' }}>{vuln.plain_language_alert}</p>
-                                                                </div>
-                                                            ))
+                                                            log.vulnerabilities.map((vuln, idx) => {
+                                                                let borderColor = '#475569'; 
+                                                                let badgeBg = '#334155';
+                                                                if (vuln.severity === 'CRITICAL') borderColor = '#ef4444';
+                                                                if (vuln.severity === 'HIGH') borderColor = '#9ca3af';
+
+                                                                return (
+                                                                    <div key={idx} style={{ padding: '20px', backgroundColor: '#0f172a', borderRadius: '8px', borderLeft: `4px solid ${borderColor}` }}>
+                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                                                            <h4 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>{vuln.technical_name}</h4>
+                                                                            <span style={{ padding: '3px 10px', backgroundColor: badgeBg, color: '#fff', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold' }}>{vuln.severity}</span>
+                                                                        </div>
+                                                                        <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem', lineHeight: '1.5' }}>{vuln.plain_language_alert}</p>
+                                                                    </div>
+                                                                );
+                                                            })
                                                         )}
                                                     </div>
                                                 )}
@@ -259,26 +283,28 @@ export default function Dashboard() {
 
                     {/* TAB: SETTINGS & SUBSCRIPTION */}
                     {activeTab === 'settings' && (
-                        <div>
-                            <h1 style={{ fontSize: '2rem', marginBottom: '30px' }}>Account Settings</h1>
+                        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                                <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Account Settings</h1>
+                            </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
                                 
-                                <div style={{ backgroundColor: '#161616', border: '1px solid #333', padding: '30px', borderRadius: '12px' }}>
-                                    <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><User size={20} /> Verified Profile</h3>
+                                <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '30px', borderRadius: '12px' }}>
+                                    <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}><User size={20} /> Verified Profile</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-                                        <input type="text" value={user?.fullName || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#888', cursor: 'not-allowed' }} />
-                                        <input type="email" value={user?.primaryEmailAddress?.emailAddress || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #444', backgroundColor: '#222', color: '#888', cursor: 'not-allowed' }} />
-                                        <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>Managed securely via Clerk. Click your avatar in the sidebar to edit.</p>
+                                        <input type="text" value={user?.fullName || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#9ca3af', cursor: 'not-allowed' }} />
+                                        <input type="email" value={user?.primaryEmailAddress?.emailAddress || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#9ca3af', cursor: 'not-allowed' }} />
+                                        <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Managed securely via Clerk. Click your avatar in the sidebar to edit.</p>
                                     </div>
                                 </div>
                                 
-                                <div style={{ backgroundColor: 'rgba(0, 255, 204, 0.05)', border: '1px solid rgba(0, 255, 204, 0.2)', padding: '30px', borderRadius: '12px' }}>
-                                    <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#00ffcc' }}><Zap size={20} /> Subscription Plan</h3>
-                                    <h1 style={{ margin: '10px 0', fontSize: '2.5rem' }}>Free Tier</h1>
-                                    <p style={{ color: '#aaa', marginBottom: '25px', lineHeight: '1.5' }}>
+                                <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '30px', borderRadius: '12px' }}>
+                                    <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#3b82f6' }}><Zap size={20} /> Subscription Plan</h3>
+                                    <h1 style={{ margin: '10px 0', fontSize: '2.5rem', color: '#fff' }}>Free Tier</h1>
+                                    <p style={{ color: '#9ca3af', marginBottom: '25px', lineHeight: '1.5' }}>
                                         You are currently on the free plan. Upgrade to Premium for advanced AI analysis, API access, and automated weekly audits.
                                     </p>
-                                    <button onClick={handleUpgrade} style={{ width: '100%', padding: '15px', backgroundColor: '#00ffcc', color: '#000', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
+                                    <button onClick={handleUpgrade} style={{ width: '100%', padding: '15px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s' }}>
                                         Upgrade with Razorpay
                                     </button>
                                 </div>
@@ -298,14 +324,14 @@ function SidebarButton({ icon, label, active, onClick }) {
             onClick={onClick}
             style={{ 
                 display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 20px', 
-                backgroundColor: active ? 'rgba(0, 255, 204, 0.1)' : 'transparent', 
-                color: active ? '#00ffcc' : '#888', 
+                backgroundColor: active ? 'rgba(59, 130, 246, 0.1)' : 'transparent', 
+                color: active ? '#3b82f6' : '#9ca3af', 
                 border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '1rem',
-                borderLeft: active ? '3px solid #00ffcc' : '3px solid transparent',
+                borderLeft: active ? '3px solid #3b82f6' : '3px solid transparent',
                 transition: 'all 0.2s'
             }}
             onMouseOver={(e) => { if(!active) e.currentTarget.style.color = 'white' }}
-            onMouseOut={(e) => { if(!active) e.currentTarget.style.color = '#888' }}
+            onMouseOut={(e) => { if(!active) e.currentTarget.style.color = '#9ca3af' }}
         >
             {icon} {label}
         </button>

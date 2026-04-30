@@ -19,8 +19,7 @@ export default function Dashboard() {
     const [expandedLogId, setExpandedLogId] = useState(null);
     
     const { user } = useUser(); 
-
-    // THE ENGINE: Fetches Scanner Results
+// THE ENGINE: Fetches REAL Live AI Scanner Results
     const handleScan = async () => {
         if (!targetUrl) {
             setError("Please enter a URL to scan.");
@@ -31,11 +30,13 @@ export default function Dashboard() {
         setError('');
         setScanResult(null);
 
+        // Send the URL straight to your live Django/Gemini AI Engine
         try {
             const response = await axios.post(
                 'https://secureai-copilot-exnr.vercel.app/api/scan/', 
                 { domain_url: targetUrl }
             );
+            // The AI returns its dynamic analysis, and we print it to the screen!
             setScanResult(response.data);
         } catch (err) {
             setError("Scan failed. Ensure your backend is running and the URL is correct.");

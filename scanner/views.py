@@ -29,7 +29,6 @@ def start_scan(request):
     
     scan_log = ScanLog.objects.create(asset=asset, status='IN_PROGRESS')
 
-    # TRIGGER THE SCANNING ENGINE
     detected_threats = run_security_scan(url)
     
     for threat in detected_threats:
@@ -44,12 +43,11 @@ def start_scan(request):
     scan_log.status = 'COMPLETED'
     scan_log.save()
 
-    # Send the final report back to the frontend
     serializer = ScanLogSerializer(scan_log)
     
-    # 🚨 THE MAGIC FIX: FORCE THE VULNERABILITIES INTO THE RESPONSE 🚨
     response_data = serializer.data
     response_data['vulnerabilities'] = detected_threats
+    response_data['domain_url'] = asset.domain_url # <--- NEW FIX: Sends URL to the main scanner
     
     return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -63,8 +61,9 @@ def get_scan_history(request):
     serializer = ScanLogSerializer(logs, many=True)
     response_data = serializer.data
     
-    # 🚨 THE MAGIC FIX: FORCE VULNERABILITIES INTO HISTORY TABS 🚨
     for i, log in enumerate(logs):
+        response_data[i]['domain_url'] = log.asset.domain_url # <--- NEW FIX: Sends URL to the History Tab
+        
         vulns = Vulnerability.objects.filter(scan=log)
         vuln_list = []
         for v in vulns:

@@ -5,7 +5,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 
-# We only import CustomUser now, NOT the default User!
 from .models import CustomUser, TargetAsset, ScanLog, Vulnerability
 from .serializers import RegisterSerializer, ScanLogSerializer
 from .engine import run_security_scan
@@ -25,17 +24,14 @@ def start_scan(request):
     if not url:
         return Response({"error": "Please provide a website URL to scan."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # We use CustomUser here so the database doesn't crash!
     test_user, created = CustomUser.objects.get_or_create(username="sme_test_user")
     asset, created = TargetAsset.objects.get_or_create(owner=test_user, domain_url=url)
     
-    # Create the log
     scan_log = ScanLog.objects.create(asset=asset, status='IN_PROGRESS')
 
     # TRIGGER THE SCANNING ENGINE
     detected_threats = run_security_scan(url)
     
-    # Save the threats to the database
     for threat in detected_threats:
         Vulnerability.objects.create(
             scan=scan_log,
@@ -45,27 +41,41 @@ def start_scan(request):
             ml_confidence_score=0.95 
         )
         
-    # Mark scan as complete
     scan_log.status = 'COMPLETED'
     scan_log.save()
 
     # Send the final report back to the frontend
     serializer = ScanLogSerializer(scan_log)
-    return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    # 🚨 THE MAGIC FIX: FORCE THE VULNERABILITIES INTO THE RESPONSE 🚨
+    response_data = serializer.data
+    response_data['vulnerabilities'] = detected_threats
+    
+    return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_scan_history(request):
-    # Find the same user we used for the scanner
     test_user, created = CustomUser.objects.get_or_create(username="sme_test_user")
-    
-    # Grab all their past scans, ordered by newest first (-id)
     logs = ScanLog.objects.filter(asset__owner=test_user).order_by('-id')
     
-    # Translate it to JSON and send it to React
     serializer = ScanLogSerializer(logs, many=True)
-    return Response(serializer.data)
+    response_data = serializer.data
+    
+    # 🚨 THE MAGIC FIX: FORCE VULNERABILITIES INTO HISTORY TABS 🚨
+    for i, log in enumerate(logs):
+        vulns = Vulnerability.objects.filter(scan=log)
+        vuln_list = []
+        for v in vulns:
+            vuln_list.append({
+                "technical_name": v.technical_name,
+                "plain_language_alert": v.plain_language_alert,
+                "severity": v.severity
+            })
+        response_data[i]['vulnerabilities'] = vuln_list
+        
+    return Response(response_data)
 
 
 # Initialize Razorpay Client
@@ -75,18 +85,15 @@ razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZOR
 @permission_classes([AllowAny])
 def create_subscription(request):
     try:
-        # We charge ₹999 for the Premium Tier (Razorpay calculates in paise, so multiply by 100)
         amount = 999 * 100 
         currency = "INR"
 
-        # Ask Razorpay to create a secure order
         razorpay_order = razorpay_client.order.create(dict(
             amount=amount,
             currency=currency,
             payment_capture='0'
         ))
 
-        # Send the order ID back to React so it can open the payment popup
         return Response({
             'order_id': razorpay_order['id'],
             'amount': amount,

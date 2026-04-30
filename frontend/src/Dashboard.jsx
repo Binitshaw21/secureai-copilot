@@ -4,8 +4,8 @@ import { Shield, Clock, Settings, Zap, User, AlertTriangle, CheckCircle, Loader 
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
-// 1. CLERK IMPORTS: Bring in the premium auth hooks!
-import { useUser, useAuth, UserButton } from '@clerk/clerk-react';
+// 1. CLERK IMPORTS
+import { useUser, UserButton } from '@clerk/clerk-react';
 
 export default function Dashboard() {
     const [activeTab, setActiveTab] = useState('scanner');
@@ -15,11 +15,10 @@ export default function Dashboard() {
     const [error, setError] = useState('');
     const [historyLogs, setHistoryLogs] = useState([]);
     
-    // 2. CLERK HOOKS: Get the real user data and secure tokens!
+    // 2. CLERK USER
     const { user } = useUser(); 
-    const { getToken } = useAuth();
 
-    // THE ENGINE: Fetches Scanner Results using Clerk's Secure Token
+    // THE ENGINE: Fetches Scanner Results
     const handleScan = async () => {
         if (!targetUrl) {
             setError("Please enter a URL to scan.");
@@ -31,12 +30,10 @@ export default function Dashboard() {
         setScanResult(null);
 
         try {
-            const token = await getToken();
+            // 👇 REMOVED THE CLERK TOKEN SO DJANGO DOESN'T CRASH 👇
             const response = await axios.post(
-                // 👇 POINTING TO YOUR HEALTHY EXNR BACKEND 👇
                 'https://secureai-copilot-exnr.vercel.app/api/scan/', 
-                { domain_url: targetUrl },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { domain_url: targetUrl }
             );
             setScanResult(response.data);
         } catch (err) {
@@ -51,11 +48,9 @@ export default function Dashboard() {
         if (activeTab === 'history') {
             const fetchHistory = async () => {
                 try {
-                    const token = await getToken();
+                    // 👇 REMOVED THE CLERK TOKEN 👇
                     const response = await axios.get(
-                        // 👇 POINTING TO YOUR HEALTHY EXNR BACKEND 👇
-                        'https://secureai-copilot-exnr.vercel.app/api/history/',
-                        { headers: { Authorization: `Bearer ${token}` } }
+                        'https://secureai-copilot-exnr.vercel.app/api/history/'
                     );
                     setHistoryLogs(response.data);
                 } catch (err) {
@@ -85,12 +80,10 @@ export default function Dashboard() {
         }
 
         try {
-            const token = await getToken();
+            // 👇 REMOVED THE CLERK TOKEN 👇
             const response = await axios.post(
-                // 👇 POINTING TO YOUR HEALTHY EXNR BACKEND 👇
                 'https://secureai-copilot-exnr.vercel.app/api/subscribe/',
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
+                {}
             );
             const orderData = response.data;
 
@@ -138,7 +131,6 @@ export default function Dashboard() {
                 </nav>
 
                 <div style={{ marginTop: 'auto', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    {/* 3. CLERK USER BUTTON: Handles Log Out and Profile automatically! */}
                     <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: { width: '40px', height: '40px' } } }} />
                     <span style={{ fontWeight: 'bold', color: '#ccc' }}>Log Out</span>
                 </div>
@@ -231,7 +223,6 @@ export default function Dashboard() {
                             <h1 style={{ fontSize: '2rem', marginBottom: '30px' }}>Account Settings</h1>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
                                 
-                                {/* 4. REAL PROFILE DATA: Injected from Clerk! */}
                                 <div style={{ backgroundColor: '#161616', border: '1px solid #333', padding: '30px', borderRadius: '12px' }}>
                                     <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><User size={20} /> Verified Profile</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>

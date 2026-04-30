@@ -207,7 +207,7 @@ export default function Dashboard() {
                                     historyLogs.map((log, index) => (
                                         <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#161616', border: '1px solid #333', padding: '20px', borderRadius: '12px' }}>
                                             <div>
-                                                <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Target: {log.asset?.domain_url || 'Unknown Asset'}</h3>
+                                                <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Security Scan #{log.id}</h3>
                                                 <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>Status: {log.status}</p>
                                             </div>
                                         </div>

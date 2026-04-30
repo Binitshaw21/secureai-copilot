@@ -4,7 +4,6 @@ import { Shield, Clock, Settings, Zap, User, AlertTriangle, Loader } from 'lucid
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
-// 1. CLERK IMPORTS
 import { useUser, UserButton } from '@clerk/clerk-react';
 
 export default function Dashboard() {
@@ -15,11 +14,9 @@ export default function Dashboard() {
     const [error, setError] = useState('');
     const [historyLogs, setHistoryLogs] = useState([]);
     
-    // State to track which history item is clicked/expanded
     const [expandedLogId, setExpandedLogId] = useState(null);
-    
     const { user } = useUser(); 
-// THE ENGINE: Fetches REAL Live AI Scanner Results
+
     const handleScan = async () => {
         if (!targetUrl) {
             setError("Please enter a URL to scan.");
@@ -30,13 +27,11 @@ export default function Dashboard() {
         setError('');
         setScanResult(null);
 
-        // Send the URL straight to your live Django/Gemini AI Engine
         try {
             const response = await axios.post(
                 'https://secureai-copilot-exnr.vercel.app/api/scan/', 
                 { domain_url: targetUrl }
             );
-            // The AI returns its dynamic analysis, and we print it to the screen!
             setScanResult(response.data);
         } catch (err) {
             setError("Scan failed. Ensure your backend is running and the URL is correct.");
@@ -45,7 +40,6 @@ export default function Dashboard() {
         }
     };
 
-    // THE HISTORIAN: Fetches past scans
     useEffect(() => {
         if (activeTab === 'history') {
             const fetchHistory = async () => {
@@ -62,7 +56,6 @@ export default function Dashboard() {
         }
     }, [activeTab]);
 
-    // THE CASH REGISTER: Razorpay Integration
     const loadRazorpayScript = () => {
         return new Promise((resolve) => {
             const script = document.createElement('script');
@@ -79,14 +72,9 @@ export default function Dashboard() {
             alert('Razorpay failed to load. Please check your internet connection.');
             return;
         }
-
         try {
-            const response = await axios.post(
-                'https://secureai-copilot-exnr.vercel.app/api/subscribe/',
-                {}
-            );
+            const response = await axios.post('https://secureai-copilot-exnr.vercel.app/api/subscribe/', {});
             const orderData = response.data;
-
             const options = {
                 key: orderData.key_id, 
                 amount: orderData.amount,
@@ -103,10 +91,8 @@ export default function Dashboard() {
                     email: user?.primaryEmailAddress?.emailAddress || "user@example.com",
                 }
             };
-
             const paymentObject = new window.Razorpay(options);
             paymentObject.open();
-
         } catch (err) {
             console.error("Payment setup failed:", err);
             alert("Could not initialize payment. Ensure your backend is running!");
@@ -115,32 +101,26 @@ export default function Dashboard() {
 
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontFamily: 'system-ui, sans-serif' }}>
-            
-            {/* LEFT SIDEBAR */}
             <aside style={{ width: '260px', backgroundColor: '#0b1120', borderRight: '1px solid #1e293b', display: 'flex', flexDirection: 'column', padding: '20px 0' }}>
                 <div style={{ padding: '0 25px', marginBottom: '40px' }}>
                     <h2 style={{ margin: 0, color: '#fff', fontWeight: '800', letterSpacing: '1px' }}>
                         SecureAI <span style={{ color: '#3b82f6' }}>Copilot</span>
                     </h2>
                 </div>
-
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '0 15px' }}>
                     <SidebarButton icon={<Shield />} label="New Scan" active={activeTab === 'scanner'} onClick={() => setActiveTab('scanner')} />
                     <SidebarButton icon={<Clock />} label="Scan History" active={activeTab === 'history'} onClick={() => setActiveTab('history')} />
                     <SidebarButton icon={<Settings />} label="Account Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                 </nav>
-
                 <div style={{ marginTop: 'auto', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: { width: '40px', height: '40px' } } }} />
                     <span style={{ fontWeight: 'bold', color: '#9ca3af' }}>Log Out</span>
                 </div>
             </aside>
 
-            {/* MAIN CONTENT AREA */}
             <main style={{ flex: 1, padding: '40px 60px', overflowY: 'auto' }}>
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
                     
-                    {/* TAB: NEW SCANNER */}
                     {activeTab === 'scanner' && (
                         <div>
                             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -167,7 +147,6 @@ export default function Dashboard() {
                             </div>
                             {error && <p style={{ color: '#ef4444', textAlign: 'center' }}>{error}</p>}
 
-                            {/* EXCACT REPLICA RESULTS PANEL */}
                             {scanResult && (
                                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ backgroundColor: '#1e293b', padding: '40px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto' }}>
                                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
@@ -175,18 +154,28 @@ export default function Dashboard() {
                                         <p style={{ color: '#cbd5e1', fontSize: '1rem', margin: '5px 0 0 0' }}>Target: {scanResult.asset?.domain_url || targetUrl}</p>
                                     </div>
                                     
+                                    {/* GREEN SECURE STATE (if 0 issues found) */}
+                                    {scanResult.vulnerabilities?.length === 0 && (
+                                        <div style={{ padding: '20px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '8px', textAlign: 'center' }}>
+                                            <p style={{ color: '#10b981', margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                                ✅ No vulnerabilities detected. This asset appears to be secure.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                         {scanResult.vulnerabilities?.map((vuln, idx) => {
-                                            // Exact colors from your screenshot
+                                            
+                                            // DYNAMIC COLORS MATCHING YOUR SCREENSHOT EXACTLY!
                                             let borderColor = '#475569'; 
                                             let badgeBg = '#334155';
                                             
                                             if (vuln.severity === 'CRITICAL') {
-                                                borderColor = '#ef4444'; // Red border
-                                                badgeBg = '#334155';     // Gray badge background
-                                            } else if (vuln.severity === 'HIGH') {
-                                                borderColor = '#9ca3af'; // Gray border
-                                                badgeBg = '#334155';     // Gray badge background
+                                                borderColor = '#ef4444'; // Red
+                                            } else if (vuln.severity === 'HIGH' || vuln.severity === 'MEDIUM') {
+                                                borderColor = '#f59e0b'; // Orange
+                                            } else if (vuln.severity === 'LOW') {
+                                                borderColor = '#10b981'; // Green
                                             }
 
                                             return (
@@ -211,14 +200,12 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    {/* TAB: HISTORY */}
                     {activeTab === 'history' && (
                         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                                 <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Scan History</h1>
                                 <p style={{ color: '#9ca3af' }}>Review your past security audits and reports.</p>
                             </div>
-                            
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                 {historyLogs.length === 0 ? (
                                     <div style={{ padding: '40px', textAlign: 'center', border: '1px dashed #334155', borderRadius: '12px', color: '#9ca3af' }}>
@@ -228,39 +215,25 @@ export default function Dashboard() {
                                     historyLogs.map((log, index) => {
                                         const scanDate = log.created_at || log.timestamp ? new Date(log.created_at || log.timestamp).toLocaleString() : 'Recent Scan';
                                         const isExpanded = expandedLogId === log.id;
-
                                         return (
-                                            <div 
-                                                key={index} 
-                                                onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
-                                                style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '20px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }}
-                                            >
+                                            <div key={index} onClick={() => setExpandedLogId(isExpanded ? null : log.id)} style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '20px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <div>
-                                                        <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>
-                                                            Target: {log.asset?.domain_url || `Security Scan #${log.id}`}
-                                                        </h3>
-                                                        <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>
-                                                            Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#3b82f6' : '#f59e0b' }}>{log.status}</span>
-                                                        </p>
+                                                        <h3 style={{ margin: '0 0 5px 0', color: '#fff' }}>Target: {log.asset?.domain_url || `Security Scan #${log.id}`}</h3>
+                                                        <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#3b82f6' : '#f59e0b' }}>{log.status}</span></p>
                                                     </div>
-                                                    <div style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                                        {isExpanded ? 'Hide Details ▲' : 'View Results ▼'}
-                                                    </div>
+                                                    <div style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '0.9rem' }}>{isExpanded ? 'Hide Details ▲' : 'View Results ▼'}</div>
                                                 </div>
-
-                                                {/* History Dropdown showing exact replica design */}
                                                 {isExpanded && log.vulnerabilities && (
                                                     <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                         {log.vulnerabilities.length === 0 ? (
-                                                            <p style={{ color: '#3b82f6', margin: 0 }}>No vulnerabilities found. Asset is secure.</p>
+                                                            <p style={{ color: '#10b981', margin: 0 }}>✅ No vulnerabilities found. Asset is secure.</p>
                                                         ) : (
                                                             log.vulnerabilities.map((vuln, idx) => {
-                                                                let borderColor = '#475569'; 
-                                                                let badgeBg = '#334155';
+                                                                let borderColor = '#475569'; let badgeBg = '#334155';
                                                                 if (vuln.severity === 'CRITICAL') borderColor = '#ef4444';
-                                                                if (vuln.severity === 'HIGH') borderColor = '#9ca3af';
-
+                                                                if (vuln.severity === 'HIGH' || vuln.severity === 'MEDIUM') borderColor = '#f59e0b';
+                                                                if (vuln.severity === 'LOW') borderColor = '#10b981';
                                                                 return (
                                                                     <div key={idx} style={{ padding: '20px', backgroundColor: '#0f172a', borderRadius: '8px', borderLeft: `4px solid ${borderColor}` }}>
                                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -282,37 +255,29 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    {/* TAB: SETTINGS & SUBSCRIPTION */}
                     {activeTab === 'settings' && (
                         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                                 <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>Account Settings</h1>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                                
                                 <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '30px', borderRadius: '12px' }}>
                                     <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}><User size={20} /> Verified Profile</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
                                         <input type="text" value={user?.fullName || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#9ca3af', cursor: 'not-allowed' }} />
                                         <input type="email" value={user?.primaryEmailAddress?.emailAddress || ''} readOnly style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#9ca3af', cursor: 'not-allowed' }} />
-                                        <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>Managed securely via Clerk. Click your avatar in the sidebar to edit.</p>
                                     </div>
                                 </div>
-                                
                                 <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '30px', borderRadius: '12px' }}>
                                     <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#3b82f6' }}><Zap size={20} /> Subscription Plan</h3>
                                     <h1 style={{ margin: '10px 0', fontSize: '2.5rem', color: '#fff' }}>Free Tier</h1>
-                                    <p style={{ color: '#9ca3af', marginBottom: '25px', lineHeight: '1.5' }}>
-                                        You are currently on the free plan. Upgrade to Premium for advanced AI analysis, API access, and automated weekly audits.
-                                    </p>
-                                    <button onClick={handleUpgrade} style={{ width: '100%', padding: '15px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s' }}>
+                                    <button onClick={handleUpgrade} style={{ width: '100%', padding: '15px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s', marginTop: '20px' }}>
                                         Upgrade with Razorpay
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
-
                 </motion.div>
             </main>
         </div>

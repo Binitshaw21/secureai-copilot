@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Shield, Clock, Settings, Zap, User, AlertTriangle, Loader, Menu, X, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -18,22 +17,11 @@ export default function Dashboard() {
     const [expandedLogId, setExpandedLogId] = useState(null);
     const { user } = useUser(); 
 
-    // 📱 MOBILE RESPONSIVENESS STATE 📱
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    // UNIVERSAL SIDEBAR STATE (Hidden by default on all devices)
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    // Listen for screen size changes
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-            if (window.innerWidth >= 768) setIsSidebarOpen(false); // Close mobile menu if expanded to desktop
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
     // ----------------------------------------------------
-    // API FUNCTIONS (Unchanged)
+    // API FUNCTIONS
     // ----------------------------------------------------
     const handleScan = async () => {
         if (!targetUrl) {
@@ -58,21 +46,14 @@ export default function Dashboard() {
         }
     };
 
-    useEffect(() => {
-        if (activeTab === 'history') {
-            const fetchHistory = async () => {
-                try {
-                    const response = await axios.get(
-                        'https://secureai-copilot-exnr.vercel.app/api/history/'
-                    );
-                    setHistoryLogs(response.data);
-                } catch (err) {
-                    console.error("Failed to load history");
-                }
-            };
-            fetchHistory();
+    const fetchHistory = async () => {
+        try {
+            const response = await axios.get('https://secureai-copilot-exnr.vercel.app/api/history/');
+            setHistoryLogs(response.data);
+        } catch (err) {
+            console.error("Failed to load history");
         }
-    }, [activeTab]);
+    };
 
     const loadRazorpayScript = () => {
         return new Promise((resolve) => {
@@ -117,64 +98,67 @@ export default function Dashboard() {
         }
     };
 
-    // Helper to change tabs and close mobile sidebar automatically
+    // Helper to change tabs and close sidebar automatically
     const handleTabSwitch = (tab) => {
         setActiveTab(tab);
-        if (isMobile) setIsSidebarOpen(false);
+        setIsSidebarOpen(false); // Always close menu after clicking a tab
+        if (tab === 'history') fetchHistory();
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontFamily: 'system-ui, sans-serif', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontFamily: 'system-ui, sans-serif', overflow: 'hidden' }}>
             
-            {/* 📱 MOBILE HEADER WITH HAMBURGER MENU 📱 */}
-            {isMobile && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', backgroundColor: '#0b1120', borderBottom: '1px solid #1e293b', zIndex: 40 }}>
-                    <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>
+            {/* 🌐 UNIVERSAL TOP HEADER (Always Visible) 🌐 */}
+            <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 25px', backgroundColor: '#0b1120', borderBottom: '1px solid #1e293b', zIndex: 40 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <Menu size={28} />
                     </button>
-                    <h2 style={{ margin: 0, color: '#fff', fontWeight: '800', fontSize: '1.2rem', letterSpacing: '1px' }}>
+                    <h2 style={{ margin: 0, color: '#fff', fontWeight: '800', fontSize: '1.3rem', letterSpacing: '1px' }}>
                         SecureAI <span style={{ color: '#3b82f6' }}>Copilot</span>
                     </h2>
-                    <div style={{ width: '28px' }}></div> {/* Spacer to perfectly center the logo */}
                 </div>
-            )}
+                {/* User Profile in Top Right for easy access */}
+                <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: { width: '35px', height: '35px' } } }} />
+            </header>
 
-            {/* 🌑 DARK OVERLAY FOR MOBILE (When menu is open) 🌑 */}
-            {isMobile && isSidebarOpen && (
-                <div 
-                    onClick={() => setIsSidebarOpen(false)} 
-                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 45 }}
-                />
-            )}
+            {/* 🌑 DARK OVERLAY (Click to close menu) 🌑 */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        onClick={() => setIsSidebarOpen(false)} 
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 45 }}
+                    />
+                )}
+            </AnimatePresence>
 
-            {/* 🧭 SIDEBAR (Responsive) 🧭 */}
+            {/* 🧭 SLIDE-IN SIDEBAR (Works on all devices) 🧭 */}
             <aside style={{ 
-                width: '260px', backgroundColor: '#0b1120', borderRight: '1px solid #1e293b', 
+                width: '280px', backgroundColor: '#0b1120', borderRight: '1px solid #1e293b', 
                 display: 'flex', flexDirection: 'column', padding: '20px 0',
-                position: isMobile ? 'fixed' : 'relative',
-                top: 0, left: isMobile ? (isSidebarOpen ? '0' : '-260px') : '0',
-                height: '100vh', zIndex: 50, transition: 'left 0.3s ease-in-out'
+                position: 'fixed', top: 0, bottom: 0,
+                left: isSidebarOpen ? '0' : '-300px',
+                zIndex: 50, transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: isSidebarOpen ? '4px 0 25px rgba(0,0,0,0.5)' : 'none'
             }}>
-                {isMobile && (
-                    <button onClick={() => setIsSidebarOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }}>
+                <div style={{ padding: '0 25px', marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ margin: 0, color: '#fff', fontWeight: '800', fontSize: '1.3rem', letterSpacing: '1px' }}>
+                        Menu
+                    </h2>
+                    <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }}>
                         <X size={24} />
                     </button>
-                )}
-
-                <div style={{ padding: '0 25px', marginBottom: '40px', marginTop: isMobile ? '10px' : '0' }}>
-                    <h2 style={{ margin: 0, color: '#fff', fontWeight: '800', letterSpacing: '1px' }}>
-                        SecureAI <span style={{ color: '#3b82f6' }}>Copilot</span>
-                    </h2>
                 </div>
 
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '5px', padding: '0 15px' }}>
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '0 15px' }}>
                     <SidebarButton icon={<Shield />} label="New Scan" active={activeTab === 'scanner'} onClick={() => handleTabSwitch('scanner')} />
                     <SidebarButton icon={<Clock />} label="Scan History" active={activeTab === 'history'} onClick={() => handleTabSwitch('history')} />
                     <SidebarButton icon={<Settings />} label="Account Settings" active={activeTab === 'settings'} onClick={() => handleTabSwitch('settings')} />
                     <SidebarButton icon={<HelpCircle />} label="Help & Support" active={activeTab === 'help'} onClick={() => handleTabSwitch('help')} />
                 </nav>
 
-                <div style={{ marginTop: 'auto', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div style={{ marginTop: 'auto', padding: '20px 25px', display: 'flex', alignItems: 'center', gap: '15px', borderTop: '1px solid #1e293b' }}>
                     <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: { width: '40px', height: '40px' } } }} />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>{user?.firstName || 'User'}</span>
@@ -184,18 +168,18 @@ export default function Dashboard() {
             </aside>
 
             {/* 🖥️ MAIN CONTENT AREA 🖥️ */}
-            <main style={{ flex: 1, padding: isMobile ? '20px' : '40px 60px', overflowY: 'auto', boxSizing: 'border-box' }}>
+            <main style={{ flex: 1, padding: '30px 20px', overflowY: 'auto', boxSizing: 'border-box' }}>
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
                     
                     {/* --- SCANNER TAB --- */}
                     {activeTab === 'scanner' && (
-                        <div>
+                        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                                <h1 style={{ fontSize: isMobile ? '1.5rem' : '2rem', marginBottom: '10px' }}>Threat Intelligence Scanner</h1>
-                                <p style={{ color: '#9ca3af', fontSize: isMobile ? '0.9rem' : '1rem' }}>Deploy AI models to detect vulnerabilities in your web assets.</p>
+                                <h1 style={{ fontSize: '1.8rem', marginBottom: '10px' }}>Threat Intelligence Scanner</h1>
+                                <p style={{ color: '#9ca3af', fontSize: '0.95rem' }}>Deploy AI models to detect vulnerabilities in your web assets.</p>
                             </div>
                             
-                            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '15px', maxWidth: '800px', margin: '0 auto 40px auto' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', sm: {flexDirection: 'row'}, gap: '15px', marginBottom: '40px' }}>
                                 <input 
                                     type="url" 
                                     placeholder="http://example.com" 
@@ -206,7 +190,7 @@ export default function Dashboard() {
                                 <button 
                                     onClick={handleScan}
                                     disabled={isScanning}
-                                    style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', padding: '15px 30px', backgroundColor: isScanning ? '#334155' : '#3b82f6', color: isScanning ? '#9ca3af' : '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: isScanning ? 'not-allowed' : 'pointer', transition: 'all 0.2s', width: isMobile ? '100%' : 'auto' }}
+                                    style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', padding: '15px 30px', backgroundColor: isScanning ? '#334155' : '#3b82f6', color: isScanning ? '#9ca3af' : '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.1rem', cursor: isScanning ? 'not-allowed' : 'pointer', transition: 'all 0.2s', width: '100%' }}
                                 >
                                     {isScanning ? <Loader className="animate-spin" size={20} /> : <Shield size={20} />}
                                     {isScanning ? 'Analyzing...' : 'Scan Now'}
@@ -215,9 +199,9 @@ export default function Dashboard() {
                             {error && <p style={{ color: '#ef4444', textAlign: 'center' }}>{error}</p>}
 
                             {scanResult && (
-                                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ backgroundColor: '#1e293b', padding: isMobile ? '20px' : '40px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto' }}>
+                                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px' }}>
                                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                                        <h2 style={{ marginTop: 0, color: '#fff', fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 'bold' }}>Scan Complete</h2>
+                                        <h2 style={{ marginTop: 0, color: '#fff', fontSize: '1.6rem', fontWeight: 'bold' }}>Scan Complete</h2>
                                         <p style={{ color: '#cbd5e1', fontSize: '0.9rem', margin: '5px 0 0 0', wordBreak: 'break-all' }}>Target: {scanResult.domain_url || targetUrl}</p>
                                     </div>
                                     
@@ -238,13 +222,15 @@ export default function Dashboard() {
 
                                             return (
                                                 <div key={idx} style={{ padding: '20px', backgroundColor: '#0f172a', borderRadius: '8px', borderLeft: `4px solid ${borderColor}` }}>
-                                                    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: '10px', marginBottom: '15px' }}>
-                                                        <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                                                            {vuln.technical_name}
-                                                        </h3>
-                                                        <span style={{ padding: '4px 12px', backgroundColor: badgeBg, color: '#fff', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                                            {vuln.severity || 'UNKNOWN'}
-                                                        </span>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                            <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                                                {vuln.technical_name}
+                                                            </h3>
+                                                            <span style={{ padding: '4px 12px', backgroundColor: badgeBg, color: '#fff', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                                                                {vuln.severity || 'UNKNOWN'}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <p style={{ margin: 0, color: '#9ca3af', lineHeight: '1.6', fontSize: '0.95rem' }}>
                                                         {vuln.plain_language_alert}
@@ -262,8 +248,8 @@ export default function Dashboard() {
                     {activeTab === 'history' && (
                         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                                <h1 style={{ fontSize: isMobile ? '1.5rem' : '2rem', marginBottom: '10px' }}>Scan History</h1>
-                                <p style={{ color: '#9ca3af', fontSize: isMobile ? '0.9rem' : '1rem' }}>Review your past security audits and reports.</p>
+                                <h1 style={{ fontSize: '1.8rem', marginBottom: '10px' }}>Scan History</h1>
+                                <p style={{ color: '#9ca3af', fontSize: '0.95rem' }}>Review your past security audits and reports.</p>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                 {historyLogs.length === 0 ? (
@@ -276,13 +262,14 @@ export default function Dashboard() {
                                         const isExpanded = expandedLogId === log.id;
                                         return (
                                             <div key={index} onClick={() => setExpandedLogId(isExpanded ? null : log.id)} style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '20px', borderRadius: '12px', cursor: 'pointer' }}>
-                                                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: '10px' }}>
-                                                    <div>
-                                                        <h3 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '1.1rem', wordBreak: 'break-all' }}>Target: {log.domain_url || 'Unknown URL'}</h3>
-                                                        <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.85rem' }}>Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#3b82f6' : '#f59e0b' }}>{log.status}</span></p>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                        <h3 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '1.1rem', wordBreak: 'break-all', paddingRight: '10px' }}>Target: {log.domain_url || 'Unknown URL'}</h3>
+                                                        <div style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '0.85rem', whiteSpace: 'nowrap', marginTop: '3px' }}>{isExpanded ? 'Hide ▲' : 'View ▼'}</div>
                                                     </div>
-                                                    <div style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '0.9rem' }}>{isExpanded ? 'Hide Details ▲' : 'View Results ▼'}</div>
+                                                    <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.85rem' }}>Date: {scanDate} | Status: <span style={{ color: log.status === 'COMPLETED' ? '#3b82f6' : '#f59e0b' }}>{log.status}</span></p>
                                                 </div>
+                                                
                                                 {isExpanded && log.vulnerabilities && (
                                                     <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #334155', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                         {log.vulnerabilities.length === 0 ? (
@@ -295,8 +282,8 @@ export default function Dashboard() {
                                                                 if (vuln.severity === 'LOW') borderColor = '#10b981';
                                                                 return (
                                                                     <div key={idx} style={{ padding: '15px', backgroundColor: '#0f172a', borderRadius: '8px', borderLeft: `4px solid ${borderColor}` }}>
-                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                                                            <h4 style={{ margin: 0, color: '#fff', fontSize: '1rem' }}>{vuln.technical_name}</h4>
+                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                                                                            <h4 style={{ margin: 0, color: '#fff', fontSize: '1rem', paddingRight: '10px' }}>{vuln.technical_name}</h4>
                                                                             <span style={{ padding: '3px 10px', backgroundColor: badgeBg, color: '#fff', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold' }}>{vuln.severity}</span>
                                                                         </div>
                                                                         <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem', lineHeight: '1.5' }}>{vuln.plain_language_alert}</p>
@@ -314,14 +301,13 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    {/* --- SETTINGS & SUBSCRIPTION TAB --- */}
+                    {/* --- SETTINGS TAB --- */}
                     {activeTab === 'settings' && (
                         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                                <h1 style={{ fontSize: isMobile ? '1.5rem' : '2rem', marginBottom: '10px' }}>Account Settings</h1>
+                                <h1 style={{ fontSize: '1.8rem', marginBottom: '10px' }}>Account Settings</h1>
                             </div>
-                            {/* Changed Grid to Stack on Mobile! */}
-                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '30px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
                                 <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '30px', borderRadius: '12px' }}>
                                     <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}><User size={20} /> Verified Profile</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
@@ -344,10 +330,10 @@ export default function Dashboard() {
                     {activeTab === 'help' && (
                         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
                             <div style={{ marginBottom: '30px' }}>
-                                <h1 style={{ fontSize: isMobile ? '1.5rem' : '2rem', marginBottom: '10px' }}>Help & Support</h1>
+                                <h1 style={{ fontSize: '1.8rem', marginBottom: '10px' }}>Help & Support</h1>
                                 <p style={{ color: '#9ca3af' }}>We are here to help keep your business secure.</p>
                             </div>
-                            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '40px', borderRadius: '12px' }}>
+                            <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '40px 20px', borderRadius: '12px' }}>
                                 <HelpCircle size={48} color="#3b82f6" style={{ marginBottom: '20px' }} />
                                 <h2 style={{ color: '#fff', marginTop: 0 }}>Need Assistance?</h2>
                                 <p style={{ color: '#9ca3af', lineHeight: '1.6', marginBottom: '30px' }}>
@@ -371,11 +357,11 @@ function SidebarButton({ icon, label, active, onClick }) {
         <button 
             onClick={onClick}
             style={{ 
-                display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 20px', 
+                display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '14px 20px', 
                 backgroundColor: active ? 'rgba(59, 130, 246, 0.1)' : 'transparent', 
                 color: active ? '#3b82f6' : '#9ca3af', 
-                border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '1rem',
-                borderLeft: active ? '3px solid #3b82f6' : '3px solid transparent',
+                border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '1.05rem',
+                borderLeft: active ? '4px solid #3b82f6' : '4px solid transparent',
                 transition: 'all 0.2s',
                 textAlign: 'left'
             }}

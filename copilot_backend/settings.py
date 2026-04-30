@@ -103,9 +103,7 @@ CORS_ALLOWED_ORIGINS = [
 AUTH_USER_MODEL = 'scanner.CustomUser'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
 
 from datetime import timedelta
